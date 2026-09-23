@@ -378,7 +378,7 @@ check('Erfolg: alle sechs Temperatur-/Betriebsart-Felder korrekt', [
     $GLOBALS['ips']['variables']['Warmwasser']['value'] ?? null,
     $GLOBALS['ips']['variables']['WarmwasserSoll']['value'] ?? null,
 ] === [11.9, 23.8, 33.4, 52.5, 55.0]);
-check('Erfolg: Betriebsart(Code) und BetriebsartText korrekt', ($GLOBALS['ips']['variables']['Betriebsart']['value'] ?? null) === 0 && ($GLOBALS['ips']['variables']['BetriebsartText']['value'] ?? null) === 'Schutzbetrieb');
+check('Erfolg: Betriebsart Heizkreis 1 (Code) und BetriebsartText korrekt', ($GLOBALS['ips']['variables']['Betriebsart']['value'] ?? null) === 0 && ($GLOBALS['ips']['variables']['BetriebsartText']['value'] ?? null) === 'Schutzbetrieb');
 check('Erfolg: Status 102', $mod->status === 102);
 check('Erfolg: genau EIN HTTP-Request (Batch-Abfrage aller Parameter in einer Anfrage)', true); // FakeClient bekommt ids als EIN Aufruf, siehe Update()-Implementierung selbst
 
@@ -418,7 +418,7 @@ check('GetFunctions(): outsideTempID zeigt auf Aussentemperatur', ($functions[0]
 check('GetFunctions(): mainOutletTempID zeigt auf Vorlauftemperatur', ($functions[0]['mainOutletTempID'] ?? 0) === $GLOBALS['ips']['variables']['Vorlauftemperatur']['id']);
 check('GetFunctions(): mainInletTempID zeigt auf Ruecklauftemperatur', ($functions[0]['mainInletTempID'] ?? 0) === $GLOBALS['ips']['variables']['Ruecklauftemperatur']['id']);
 check('GetFunctions(): dhwTempID/dhwTargetTempID zeigen auf Warmwasser Ist/Soll', ($functions[0]['dhwTempID'] ?? 0) === $GLOBALS['ips']['variables']['Warmwasser']['id'] && ($functions[0]['dhwTargetTempID'] ?? 0) === $GLOBALS['ips']['variables']['WarmwasserSoll']['id']);
-check('GetFunctions(): operatingModeID zeigt auf Betriebsart(Code)', ($functions[0]['operatingModeID'] ?? 0) === $GLOBALS['ips']['variables']['Betriebsart']['id']);
+check('GetFunctions(): operatingModeID zeigt auf Betriebsart Heizkreis 1 (Code)', ($functions[0]['operatingModeID'] ?? 0) === $GLOBALS['ips']['variables']['Betriebsart']['id']);
 check('GetFunctions(): PowerID/EnergyID bleiben 0 (nur Temperaturen/Betriebsart v1)', ($functions[0]['PowerID'] ?? -1) === 0 && ($functions[0]['EnergyID'] ?? -1) === 0);
 check('GetFunctions(): reachable folgt der Erreichbar-Variable', ($functions[0]['reachable'] ?? null) === true);
 
@@ -544,7 +544,7 @@ useFakeClient($fake);
 $fake->fail = [];
 $s2->Update();
 [$line, $color] = statusOf($s2);
-check('Erfolg: ✅ nennt Alter und alle Werte inkl. Betriebsart', strpos($line, '✅ ') === 0 && strpos($line, 'gelesen vor 0 s') !== false && strpos($line, 'Betriebsart Schutzbetrieb') !== false && $color === -1, $line);
+check('Erfolg: ✅ nennt Alter und alle Werte inkl. Betriebsart', strpos($line, '✅ ') === 0 && strpos($line, 'gelesen vor 0 s') !== false && strpos($line, 'Betriebsart Heizkreis 1 Schutzbetrieb') !== false && $color === -1, $line);
 check('Erfolg: Dezimalkomma bei den Werten', strpos($line, 'Außentemperatur 11,9 °C') !== false && strpos($line, 'Warmwasser Sollwert 55,0 °C') !== false, $line);
 
 $fake->fail = [8831];

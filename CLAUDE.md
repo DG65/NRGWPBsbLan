@@ -110,6 +110,31 @@ die wie der Modulbau selbst erst Dietmars ausdrueckliche Freigabe braucht, nicht
 einem einzelnen Testerkommentar abgeleitet wird. Dokumentiert fuer eine spaetere
 Erweiterung, falls gewuenscht.
 
+## Erste Live-Bestätigung und Mehrkreis-Erkenntnis (Forum-Posts #12/#13, 23.09.2026)
+
+**Post #12 -- Modul installiert, nicht nur einzelne JQ-URLs geprüft:** "Die Werte werden
+alle korrekt angezeigt und sind identisch mit den Werten auf dem Display meiner Anlage."
+Erste Bestaetigung des TATSAECHLICHEN Moduls (0.1.0) an echter Hardware, nicht nur der
+rohen BSB-LAN-Antworten wie zuvor.
+
+**Post #13 -- 700/1200/1201 sind DREI verschiedene Parameter, keine Synonyme:**
+- 700 = Betriebsart **Heizkreis 1** (schreibbar: 0=Schutzbetrieb -> 3=Komfort bestaetigt)
+- 1200 = Betriebsartumschaltung, von BSB-LAN beim Schreiben als "**Heizkreis 2** --
+  Betriebsartumschaltung" bezeichnet
+- 1201 = Betriebsart, von BSB-LAN beim Schreiben als "**Kühlkreis 2** -- Betriebsart"
+  bezeichnet
+- Die drei Werte synchronisieren sich NICHT automatisch (700 auf Komfort gesetzt liess
+  1200 unveraendert auf Reduziert).
+
+Damit ist klar: 700 ist NICHT "die" Betriebsart der Anlage, sondern spezifisch Heizkreis 1.
+**Reaktion (0.1.1):** Beschriftung von "Betriebsart"/"Betriebsart (Code)" auf "Betriebsart
+Heizkreis 1"/"Betriebsart Heizkreis 1 (Code)" praezisiert (Variablen-Idents `Betriebsart`/
+`BetriebsartText` unveraendert, keine Vertragsaenderung) -- reine Klarstellung, kein
+Verhalten geaendert. Heizkreis 2 (1200)/Kühlkreis 2 (1201) NICHT als eigene Felder
+aufgenommen (waere ein neues Formularfeld je Kreis, noch keine Dietmar-Entscheidung, ob
+das fuer v1 gebraucht wird -- Lütfüs eigene Anlage zeigt laut Post #12 auf dem Display
+ohnehin nur die bereits gelesenen Werte korrekt an).
+
 ## Was bewusst NICHT Teil von v1 ist
 
 - **Keine Steuerbefehle** (nur lesend) -- obwohl BSB-LAN offiziell auch `/JS` (Schreiben)

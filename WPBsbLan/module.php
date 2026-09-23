@@ -387,8 +387,8 @@ class WPBsbLan extends IPSModule
         }
 
         if ($this->ReadPropertyInteger('ParamBetriebsart') > 0) {
-            $this->MaintainVariable('Betriebsart', 'Betriebsart (Code)', VARIABLETYPE_INTEGER, '', $pos++, true);
-            $this->MaintainVariable('BetriebsartText', 'Betriebsart', VARIABLETYPE_STRING, '', $pos++, true);
+            $this->MaintainVariable('Betriebsart', 'Betriebsart Heizkreis 1 (Code)', VARIABLETYPE_INTEGER, '', $pos++, true);
+            $this->MaintainVariable('BetriebsartText', 'Betriebsart Heizkreis 1', VARIABLETYPE_STRING, '', $pos++, true);
             if ($betriebsart !== null) {
                 $this->SetValue('Betriebsart', (int)$betriebsart['value']);
                 // BSB-LAN liefert den Klartext im 'desc'-Feld direkt mit (z. B.
@@ -472,7 +472,7 @@ class WPBsbLan extends IPSModule
             if ($id !== 0) {
                 $text = (string)GetValue($id);
                 if ($text !== '') {
-                    $parts[] = 'Betriebsart ' . $text;
+                    $parts[] = 'Betriebsart Heizkreis 1 ' . $text;
                 }
             }
         }

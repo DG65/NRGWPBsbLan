@@ -169,7 +169,7 @@
                 {
                     "type": "NumberSpinner",
                     "name": "ParamBetriebsart",
-                    "caption": "Betriebsart (Klartext kommt direkt von BSB-LAN mit)",
+                    "caption": "Betriebsart Heizkreis 1 (Klartext kommt direkt von BSB-LAN mit)",
                     "minimum": 0,
                     "maximum": 99999
                 }

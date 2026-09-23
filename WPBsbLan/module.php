@@ -51,6 +51,9 @@ class WPBsbLan extends IPSModule
         '0.1.0' => [
             'Erste Version: Heizungen/Wärmepumpen über einen lokalen BSB-LAN-Adapter auslesen -- Außen-, Vorlauf-, Rücklauftemperatur, Warmwasser Ist/Soll und Betriebsart, alle Parameternummern frei einstellbar.',
         ],
+        '0.1.1' => [
+            '„Betriebsart“ heißt jetzt „Betriebsart Heizkreis 1“ -- an mehrkreisigen Anlagen gibt es eigene, unabhängige Parameter je Heiz-/Kühlkreis, die sich nicht automatisch mitändern.',
+        ],
     ];
     private const LIBRARY_GUID = '{61F8D0DA-6E1F-497F-9A1A-AC797E298A35}';
 

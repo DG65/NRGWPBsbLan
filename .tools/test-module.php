@@ -496,7 +496,7 @@ $newsMod = new WPBsbLan();
 $newsMod->Create();
 $formNews = json_decode($newsMod->GetConfigurationForm(), true);
 $newsPanel = findFormElement($formNews['elements'], 'NewsPanel');
-check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version 0.1.0', json_encode($newsPanel['caption'] ?? null));
+check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version 0.1.1', json_encode($newsPanel['caption'] ?? null));
 // Bewusst eine ANDERE Version als der einzige NEWS_VERSIONS-Schluessel (0.1.0),
 // damit ein Test, der nur den Fallback (letzter Schluessel) prueft, nicht
 // zufaellig durchrutscht.

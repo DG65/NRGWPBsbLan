@@ -1,0 +1,186 @@
+{
+    "elements": [
+        {
+            "type": "ExpansionPanel",
+            "caption": "📖 Dokumentation & Hilfe",
+            "expanded": false,
+            "items": [
+                {
+                    "type": "Label",
+                    "name": "VersionInfo",
+                    "caption": "ℹ️ WPBsbLan Version -- lokale Anbindung von Heizungen/Wärmepumpen über einen BSB-LAN-Adapter."
+                },
+                {
+                    "type": "Label",
+                    "caption": "Liest eine Heizung/Wärmepumpe über einen lokalen BSB-LAN-Adapter (github.com/fredlcore/bsb_lan) aus -- ohne Internet, ohne Herstellerkonto. Details: https://github.com/DG65/NRGWPBsbLan"
+                },
+                {
+                    "type": "Label",
+                    "caption": "Ablauf: 1. IP-Adresse (und ggf. Port/Passwort) des BSB-LAN-Adapters eintragen → 2. die sechs Parameternummern für deine Anlage prüfen/anpassen (vorbelegt mit an einer Fujitsu Waterstage bestätigten Werten) → 3. Übernehmen → 4. „WPBsbLan aktiv“ einschalten und erneut übernehmen."
+                },
+                {
+                    "type": "Button",
+                    "caption": "🔄 Übernehmen erzwingen (ohne Formularänderung)",
+                    "confirm": "Wirklich ApplyChanges() erzwingen? Praktisch direkt nach einem Modul-Update über die Modulverwaltung.",
+                    "onClick": "IPS_ApplyChanges($id); echo '✅ ApplyChanges() ausgeführt.';"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "name": "GeneralPanel",
+            "caption": "🔧 Allgemein",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "WPBSBL_Active",
+                    "caption": "WPBsbLan aktiv"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WPBSBL_Interval",
+                    "caption": "Aktualisierungsintervall (Sekunden)",
+                    "minimum": 30,
+                    "maximum": 600,
+                    "suffix": " s"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "name": "ConnectionPanel",
+            "caption": "🔌 BSB-LAN-Adapter",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "Label",
+                    "name": "ConnectionStatus",
+                    "caption": ""
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "Host",
+                            "caption": "IP-Adresse / Hostname des BSB-LAN-Adapters"
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "Port",
+                            "caption": "Port",
+                            "minimum": 1,
+                            "maximum": 65535
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "CheckBox",
+                            "name": "UseHttps",
+                            "caption": "HTTPS statt HTTP"
+                        },
+                        {
+                            "type": "PasswordTextBox",
+                            "name": "Password",
+                            "caption": "BSB-LAN-Passwort (falls eingerichtet, sonst leer lassen)"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "name": "ParameterPanel",
+            "caption": "🌡️ Parameter-Zuordnung",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "BSB-LAN-Parameternummern sind je Anlage unterschiedlich -- die Vorbelegung stammt von einer an einer echten Fujitsu Waterstage (Siemens RVS21.831/127) bestätigten Anlage. Bei einer anderen Heizung/Wärmepumpe ggf. anpassen (0 = Feld nicht vorhanden/nicht genutzt)."
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamAussentemperatur",
+                            "caption": "Außentemperatur",
+                            "minimum": 0,
+                            "maximum": 99999
+                        },
+                        {
+                            "type": "PopupButton",
+                            "caption": "Woher bekomme ich die richtige Parameternummer?",
+                            "width": "480px",
+                            "popup": {
+                                "caption": "Woher bekomme ich die richtige Parameternummer?",
+                                "items": [
+                                    {
+                                        "type": "Label",
+                                        "caption": "Im BSB-LAN-Webinterface unter „Einstellungen“ bzw. den Kategorien -- dort steht die Parameternummer direkt neben dem jeweiligen Wert. Alternativ liefert der URL-Aufruf http://<deine-bsb-lan-adresse>/JQ=<Nummer> im Browser eine JSON-Antwort mit Name und aktuellem Wert zum Gegenprüfen."
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamVorlauftemperatur",
+                            "caption": "Vorlauftemperatur",
+                            "minimum": 0,
+                            "maximum": 99999
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamRuecklauftemperatur",
+                            "caption": "Rücklauftemperatur",
+                            "minimum": 0,
+                            "maximum": 99999
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamWarmwasser",
+                            "caption": "Warmwasser Ist",
+                            "minimum": 0,
+                            "maximum": 99999
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamWarmwasserSoll",
+                            "caption": "Warmwasser Soll",
+                            "minimum": 0,
+                            "maximum": 99999
+                        }
+                    ]
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "ParamBetriebsart",
+                    "caption": "Betriebsart (Klartext kommt direkt von BSB-LAN mit)",
+                    "minimum": 0,
+                    "maximum": 99999
+                }
+            ]
+        }
+    ],
+    "status": [
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "BSB-LAN-Adapter nicht erreichbar -- IP-Adresse/Port/Passwort prüfen"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "id": "{61F8D0DA-6E1F-497F-9A1A-AC797E298A35}",
+    "author": "DG65",
+    "name": "NRG-Stack WPBsbLan",
+    "url": "https://github.com/DG65/NRGWPBsbLan",
+    "version": "0.1.0",
+    "build": 1,
+    "date": 1789603200,
+    "compatibility": {
+        "version": "9.0"
+    }
+}

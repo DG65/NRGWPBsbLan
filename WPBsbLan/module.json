@@ -1,0 +1,15 @@
+{
+    "id": "{D077685F-50BF-4678-A42A-0A33CDEF8C89}",
+    "library": "{61F8D0DA-6E1F-497F-9A1A-AC797E298A35}",
+    "name": "WPBsbLan",
+    "type": 3,
+    "vendor": "",
+    "aliases": [
+        "NRG-Stack WPBsbLan",
+        "Wärmepumpe/Heizung über BSB-LAN"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "WPBSBL"
+}

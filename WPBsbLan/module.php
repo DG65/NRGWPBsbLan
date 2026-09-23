@@ -54,6 +54,9 @@ class WPBsbLan extends IPSModule
         '0.1.1' => [
             '„Betriebsart“ heißt jetzt „Betriebsart Heizkreis 1“ -- an mehrkreisigen Anlagen gibt es eigene, unabhängige Parameter je Heiz-/Kühlkreis, die sich nicht automatisch mitändern.',
         ],
+        '0.2.0' => [
+            'Neues Feld „Betriebsart Kühlkreis 1“ -- eigener, unabhängiger Parameter für den Kühlbetrieb, ergänzend zu „Betriebsart Heizkreis 1“.',
+        ],
     ];
     private const LIBRARY_GUID = '{61F8D0DA-6E1F-497F-9A1A-AC797E298A35}';
 
@@ -85,6 +88,19 @@ class WPBsbLan extends IPSModule
         'ParamWarmwasser'          => 8830,
         'ParamWarmwasserSoll'      => 8831,
         'ParamBetriebsart'         => 700,
+        'ParamBetriebsartKuehl1'   => 901,
+    ];
+
+    // Betriebsart-Felder: BSB-LAN/Siemens fuehrt je Heiz-/Kuehlkreis EIGENE,
+    // unabhaengige Betriebsart-Parameter (Forum-Post #13/#15, 23.09.2026 --
+    // Lütfüs Anlage hat Heizkreis 1 (700) im Einsatz, Heizkreis 2 (1200) und
+    // Kühlkreis 2 (1201) vorhanden aber ungenutzt, dafuer nutzt er Kühlkreis 1
+    // (901) gelegentlich). Property => [Ident, Caption] -- jeweils zwei
+    // Variablen (Ident = Code/INTEGER, Ident+'Text' = Klartext aus BSB-LANs
+    // eigenem 'desc'-Feld/STRING, keine lokale Enum-Tabelle noetig).
+    private const MODE_FIELDS = [
+        'ParamBetriebsart'       => ['ident' => 'Betriebsart',        'caption' => 'Betriebsart Heizkreis 1'],
+        'ParamBetriebsartKuehl1' => ['ident' => 'BetriebsartKuehl1',  'caption' => 'Betriebsart Kühlkreis 1'],
     ];
 
     public function Create()
@@ -308,6 +324,19 @@ class WPBsbLan extends IPSModule
         return $out;
     }
 
+    /** Konfigurierte Betriebsart-Felder (Ident => Parameternummer), analog configuredFields(). */
+    private function configuredModes(): array
+    {
+        $out = [];
+        foreach (self::MODE_FIELDS as $property => $def) {
+            $paramId = $this->ReadPropertyInteger($property);
+            if ($paramId > 0) {
+                $out[$def['ident']] = $paramId;
+            }
+        }
+        return $out;
+    }
+
     public function Update(): void
     {
         if (!$this->ReadPropertyBoolean('WPBSBL_Active')) {
@@ -319,28 +348,30 @@ class WPBsbLan extends IPSModule
             return;
         }
         $fields = $this->configuredFields();
-        $betriebsartParam = $this->ReadPropertyInteger('ParamBetriebsart');
-        $allParams = array_values($fields);
-        if ($betriebsartParam > 0) {
-            $allParams[] = $betriebsartParam;
-        }
+        $modes  = $this->configuredModes();
+        $allParams = array_merge(array_values($fields), array_values($modes));
 
         $client = $this->bsbLanClient();
         $raw = ($allParams !== []) ? $client->queryParameters($allParams) : [];
-        $this->recordCycle($fields, $betriebsartParam, $raw);
+        $this->recordCycle($fields, $modes, $raw);
 
         $reachable = ($raw !== null) && (count($allParams) === 0 || count($raw) > 0);
         $values = [];
+        $modeValues = [];
         if ($raw !== null) {
             foreach ($fields as $ident => $paramId) {
                 if (isset($raw[$paramId])) {
                     $values[$ident] = $raw[$paramId]['value'];
                 }
             }
+            foreach ($modes as $ident => $paramId) {
+                if (isset($raw[$paramId])) {
+                    $modeValues[$ident] = $raw[$paramId];
+                }
+            }
         }
-        $betriebsart = ($raw !== null && $betriebsartParam > 0 && isset($raw[$betriebsartParam])) ? $raw[$betriebsartParam] : null;
 
-        $this->maintainDeviceVariables($values, $betriebsart, $reachable);
+        $this->maintainDeviceVariables($values, $modeValues, $reachable);
         if ($reachable) {
             $this->WriteAttributeInteger('LastSeenAt', time());
         }
@@ -372,7 +403,7 @@ class WPBsbLan extends IPSModule
         );
     }
 
-    private function maintainDeviceVariables(array $values, ?array $betriebsart, bool $reachable): void
+    private function maintainDeviceVariables(array $values, array $modeValues, bool $reachable): void
     {
         $pos = 0;
         $this->MaintainVariable('Erreichbar', 'Erreichbar', VARIABLETYPE_BOOLEAN, '~Alert.Reversed', $pos++, true);
@@ -389,15 +420,20 @@ class WPBsbLan extends IPSModule
             }
         }
 
-        if ($this->ReadPropertyInteger('ParamBetriebsart') > 0) {
-            $this->MaintainVariable('Betriebsart', 'Betriebsart Heizkreis 1 (Code)', VARIABLETYPE_INTEGER, '', $pos++, true);
-            $this->MaintainVariable('BetriebsartText', 'Betriebsart Heizkreis 1', VARIABLETYPE_STRING, '', $pos++, true);
-            if ($betriebsart !== null) {
-                $this->SetValue('Betriebsart', (int)$betriebsart['value']);
+        foreach (self::MODE_FIELDS as $property => $def) {
+            if ($this->ReadPropertyInteger($property) <= 0) {
+                continue;
+            }
+            $ident = $def['ident'];
+            $this->MaintainVariable($ident, $def['caption'] . ' (Code)', VARIABLETYPE_INTEGER, '', $pos++, true);
+            $this->MaintainVariable($ident . 'Text', $def['caption'], VARIABLETYPE_STRING, '', $pos++, true);
+            if (isset($modeValues[$ident])) {
+                $mode = $modeValues[$ident];
+                $this->SetValue($ident, (int)$mode['value']);
                 // BSB-LAN liefert den Klartext im 'desc'-Feld direkt mit (z. B.
                 // "Schutzbetrieb") -- keine eigene Enum-Tabelle noetig, anders
                 // als bei den Modbus-Herstellern.
-                $this->SetValue('BetriebsartText', $betriebsart['desc'] !== '' ? $betriebsart['desc'] : (string)(int)$betriebsart['value']);
+                $this->SetValue($ident . 'Text', $mode['desc'] !== '' ? $mode['desc'] : (string)(int)$mode['value']);
             }
         }
     }
@@ -426,17 +462,14 @@ class WPBsbLan extends IPSModule
      * Merkt sich, wann der letzte Lesezyklus lief und welche konfigurierten
      * Felder dabei NICHT gelesen wurden -- Grundlage der Statuszeile.
      */
-    private function recordCycle(array $fields, int $betriebsartParam, ?array $raw): void
+    private function recordCycle(array $fields, array $modes, ?array $raw): void
     {
         $this->WriteAttributeInteger('LastCycleAt', time());
         $missing = [];
-        foreach ($fields as $ident => $paramId) {
+        foreach (array_merge($fields, $modes) as $ident => $paramId) {
             if ($raw === null || !isset($raw[$paramId])) {
                 $missing[] = $ident;
             }
-        }
-        if ($betriebsartParam > 0 && ($raw === null || !isset($raw[$betriebsartParam]))) {
-            $missing[] = 'Betriebsart';
         }
         $this->WriteAttributeString('LastMissing', implode(',', $missing));
     }
@@ -456,6 +489,20 @@ class WPBsbLan extends IPSModule
         return 'vor ' . intdiv($sec, 86400) . ' Tagen';
     }
 
+    /** Anzeigename zu einem Ident -- Temperaturfeld oder Betriebsart-Feld. */
+    private function captionOf(string $ident): string
+    {
+        if (isset(self::FIELD_CAPTIONS[$ident])) {
+            return self::FIELD_CAPTIONS[$ident];
+        }
+        foreach (self::MODE_FIELDS as $def) {
+            if ($def['ident'] === $ident) {
+                return $def['caption'];
+            }
+        }
+        return $ident;
+    }
+
     /** Zuletzt uebernommene Werte als Text, z. B. "Außentemperatur 11,9 °C, ...". */
     private function lastValuesText(): string
     {
@@ -470,13 +517,17 @@ class WPBsbLan extends IPSModule
             }
             $parts[] = $caption . ' ' . number_format((float)GetValue($id), 1, ',', '') . ' °C';
         }
-        if ($this->ReadPropertyInteger('ParamBetriebsart') > 0) {
-            $id = $this->contractFieldID('BetriebsartText');
-            if ($id !== 0) {
-                $text = (string)GetValue($id);
-                if ($text !== '') {
-                    $parts[] = 'Betriebsart Heizkreis 1 ' . $text;
-                }
+        foreach (self::MODE_FIELDS as $property => $def) {
+            if ($this->ReadPropertyInteger($property) <= 0) {
+                continue;
+            }
+            $id = $this->contractFieldID($def['ident'] . 'Text');
+            if ($id === 0) {
+                continue;
+            }
+            $text = (string)GetValue($id);
+            if ($text !== '') {
+                $parts[] = $def['caption'] . ' ' . $text;
             }
         }
         return implode(', ', $parts);
@@ -504,8 +555,8 @@ class WPBsbLan extends IPSModule
         }
 
         $fields = $this->configuredFields();
-        $hasBetriebsart = $this->ReadPropertyInteger('ParamBetriebsart') > 0;
-        if (count($fields) === 0 && !$hasBetriebsart) {
+        $modes = $this->configuredModes();
+        if (count($fields) === 0 && count($modes) === 0) {
             return ['⛔ Kein Feld konfiguriert: mindestens eine Parameternummer eintragen, sonst gibt es nichts zu lesen.', 0xFF0000];
         }
 
@@ -533,9 +584,9 @@ class WPBsbLan extends IPSModule
         if (count($missingIdents) > 0) {
             $names = [];
             foreach ($missingIdents as $ident) {
-                $names[] = self::FIELD_CAPTIONS[$ident] ?? $ident;
+                $names[] = $this->captionOf($ident);
             }
-            $count = count($fields) + ($hasBetriebsart ? 1 : 0);
+            $count = count($fields) + count($modes);
             return ['⚠️ Adapter antwortet, aber ' . count($names) . ' von ' . $count . ' Feldern wurden nicht gelesen (' . implode(', ', $names) . ') -- Parameternummer(n) prüfen. Gelesen ' . $this->ageText($lastCycle) . ': ' . $values . '.', -1];
         }
         return ['✅ BSB-LAN-Adapter antwortet, gelesen ' . $this->ageText($lastCycle) . ': ' . $values . '.', -1];

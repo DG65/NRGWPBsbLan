@@ -167,11 +167,23 @@
                     ]
                 },
                 {
-                    "type": "NumberSpinner",
-                    "name": "ParamBetriebsart",
-                    "caption": "Betriebsart Heizkreis 1 (Klartext kommt direkt von BSB-LAN mit)",
-                    "minimum": 0,
-                    "maximum": 99999
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamBetriebsart",
+                            "caption": "Betriebsart Heizkreis 1 (Klartext kommt direkt von BSB-LAN mit)",
+                            "minimum": 0,
+                            "maximum": 99999
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "ParamBetriebsartKuehl1",
+                            "caption": "Betriebsart Kühlkreis 1",
+                            "minimum": 0,
+                            "maximum": 99999
+                        }
+                    ]
                 }
             ]
         }

@@ -135,6 +135,23 @@ aufgenommen (waere ein neues Formularfeld je Kreis, noch keine Dietmar-Entscheid
 das fuer v1 gebraucht wird -- Lütfüs eigene Anlage zeigt laut Post #12 auf dem Display
 ohnehin nur die bereits gelesenen Werte korrekt an).
 
+## Betriebsart Kühlkreis 1 nachgefragt und aufgenommen (0.2.0, Forum-Posts #14/#15, 23.09.2026)
+
+Nachgefragt, ob Lütfü Heizkreis 2 (1200)/Kühlkreis 2 (1201) als Zusatzfelder haben
+moechte: **nein** ("wuerde ich nicht unbedingt benoetigen", an seiner Anlage vorhanden
+aber ungenutzt). Stattdessen von ihm selbst vorgeschlagen: **901 = Kühlkreis 1 --
+Betriebsart**, den er tatsaechlich gelegentlich nutzt. Umgesetzt als zweites,
+unabhaengiges Betriebsart-Feld (`ParamBetriebsartKuehl1`, Ident `BetriebsartKuehl1`/
+`BetriebsartKuehl1Text`). Code dafuer generalisiert: `MODE_FIELDS`-Konstante
+(Property => [Ident, Caption]) statt der bisherigen Einzelbehandlung von `Betriebsart` --
+`configuredModes()`, `maintainDeviceVariables()`, `recordCycle()`, `lastValuesText()`,
+`statusLine()` iterieren jetzt ueber `MODE_FIELDS` statt ein Feld hart zu verdrahten.
+`GetFunctions().operatingModeID` bleibt bewusst an Heizkreis 1 (`Betriebsart`) gebunden,
+NICHT an Kühlkreis 1 -- der NRG-Stack-Vertrag hat nur ein einzelnes Betriebsart-Feld,
+Kühlkreis 1 ist (wie Heizkreis 2/Kühlkreis 2 es waeren) eine modul-lokale Zusatzvariable
+ausserhalb des Vertrags. Heizkreis 2 (1200) und Kühlkreis 2 (1201) bewusst NICHT
+aufgenommen -- Lütfü braucht sie nicht, an seiner Anlage ungenutzt.
+
 ## Was bewusst NICHT Teil von v1 ist
 
 - **Keine Steuerbefehle** (nur lesend) -- obwohl BSB-LAN offiziell auch `/JS` (Schreiben)

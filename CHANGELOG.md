@@ -1,5 +1,11 @@
 # Changelog — NRG-Stack WPBsbLan
 
+## 0.2.0 (Build 3) — 23.09.2026
+
+- **Neues Feld „Betriebsart Kühlkreis 1“.** Lütfü nutzt an seiner Fujitsu Waterstage neben Heizkreis 1 (700) gelegentlich auch den Kühlbetrieb über einen eigenen, unabhängigen Parameter (901) -- jetzt als eigenes, optionales Formularfeld (0 = nicht genutzt) mit eigenen Variablen (Code + Klartext), genau wie Heizkreis 1. Heizkreis 2 (1200) und Kühlkreis 2 (1201) sind laut Lütfü an seiner Anlage vorhanden, aber ungenutzt -- bewusst nicht aufgenommen.
+- Intern: Betriebsart-Felder sind jetzt über eine gemeinsame `MODE_FIELDS`-Struktur statt Einzelcode behandelt -- ein künftiger dritter Betriebsart-Parameter (z. B. Heizkreis 2) braucht nur einen neuen Eintrag, keine Logikänderung.
+- Prüfstand: 62 Prüfungen, elf Mutationen der Zielstellen geprüft.
+
 ## 0.1.1 (Build 2) — 23.09.2026
 
 - **Erste Live-Bestätigung: Modul installiert und an einer echten Anlage geprüft.** Lütfü (Fujitsu Waterstage WSYK160DG9) hat WPBsbLan installiert: „Die Werte werden alle korrekt angezeigt und sind identisch mit den Werten auf dem Display meiner Anlage.“

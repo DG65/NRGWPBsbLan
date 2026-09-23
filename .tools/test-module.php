@@ -307,7 +307,8 @@ check('Parameter-Standardwerte entsprechen Lütfüs bestätigter Fujitsu-Waterst
     $GLOBALS['ips']['properties']['ParamWarmwasser'],
     $GLOBALS['ips']['properties']['ParamWarmwasserSoll'],
     $GLOBALS['ips']['properties']['ParamBetriebsart'],
-] === [8700, 8412, 8410, 8830, 8831, 700]);
+    $GLOBALS['ips']['properties']['ParamBetriebsartKuehl1'],
+] === [8700, 8412, 8410, 8830, 8831, 700, 901]);
 
 $mod->ApplyChanges();
 check('Inaktiv: Status 104, kein Timer', $mod->status === 104 && $mod->GetTimerInterval('WPBSBL_UpdateTimer') === 0);
@@ -367,6 +368,7 @@ $fake->values = [
     8830 => param('52.5'),
     8831 => param('55.0'),
     700  => param('0', 'Schutzbetrieb', ''),
+    901  => param('0', 'Schutzbetrieb', ''),
 ];
 useFakeClient($fake);
 $mod->Update();
@@ -379,6 +381,7 @@ check('Erfolg: alle sechs Temperatur-/Betriebsart-Felder korrekt', [
     $GLOBALS['ips']['variables']['WarmwasserSoll']['value'] ?? null,
 ] === [11.9, 23.8, 33.4, 52.5, 55.0]);
 check('Erfolg: Betriebsart Heizkreis 1 (Code) und BetriebsartText korrekt', ($GLOBALS['ips']['variables']['Betriebsart']['value'] ?? null) === 0 && ($GLOBALS['ips']['variables']['BetriebsartText']['value'] ?? null) === 'Schutzbetrieb');
+check('Erfolg: Betriebsart Kühlkreis 1 (Code) und BetriebsartKuehl1Text korrekt (eigenes, unabhängiges Feld)', ($GLOBALS['ips']['variables']['BetriebsartKuehl1']['value'] ?? null) === 0 && ($GLOBALS['ips']['variables']['BetriebsartKuehl1Text']['value'] ?? null) === 'Schutzbetrieb');
 check('Erfolg: Status 102', $mod->status === 102);
 check('Erfolg: genau EIN HTTP-Request (Batch-Abfrage aller Parameter in einer Anfrage)', true); // FakeClient bekommt ids als EIN Aufruf, siehe Update()-Implementierung selbst
 
@@ -419,6 +422,7 @@ check('GetFunctions(): mainOutletTempID zeigt auf Vorlauftemperatur', ($function
 check('GetFunctions(): mainInletTempID zeigt auf Ruecklauftemperatur', ($functions[0]['mainInletTempID'] ?? 0) === $GLOBALS['ips']['variables']['Ruecklauftemperatur']['id']);
 check('GetFunctions(): dhwTempID/dhwTargetTempID zeigen auf Warmwasser Ist/Soll', ($functions[0]['dhwTempID'] ?? 0) === $GLOBALS['ips']['variables']['Warmwasser']['id'] && ($functions[0]['dhwTargetTempID'] ?? 0) === $GLOBALS['ips']['variables']['WarmwasserSoll']['id']);
 check('GetFunctions(): operatingModeID zeigt auf Betriebsart Heizkreis 1 (Code)', ($functions[0]['operatingModeID'] ?? 0) === $GLOBALS['ips']['variables']['Betriebsart']['id']);
+check('GetFunctions(): operatingModeID bleibt an Heizkreis 1 gebunden, NICHT an Kühlkreis 1', ($functions[0]['operatingModeID'] ?? 0) !== $GLOBALS['ips']['variables']['BetriebsartKuehl1']['id']);
 check('GetFunctions(): PowerID/EnergyID bleiben 0 (nur Temperaturen/Betriebsart v1)', ($functions[0]['PowerID'] ?? -1) === 0 && ($functions[0]['EnergyID'] ?? -1) === 0);
 check('GetFunctions(): reachable folgt der Erreichbar-Variable', ($functions[0]['reachable'] ?? null) === true);
 
@@ -496,7 +500,7 @@ $newsMod = new WPBsbLan();
 $newsMod->Create();
 $formNews = json_decode($newsMod->GetConfigurationForm(), true);
 $newsPanel = findFormElement($formNews['elements'], 'NewsPanel');
-check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version 0.1.1', json_encode($newsPanel['caption'] ?? null));
+check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version 0.2.0', json_encode($newsPanel['caption'] ?? null));
 // Bewusst eine ANDERE Version als der einzige NEWS_VERSIONS-Schluessel (0.1.0),
 // damit ein Test, der nur den Fallback (letzter Schluessel) prueft, nicht
 // zufaellig durchrutscht.
@@ -527,13 +531,25 @@ $GLOBALS['ips']['properties']['Host'] = '';
 check('Aktiv ohne Host: ⛔ Pflichtangabe fehlt, rot', strpos($line, '⛔ Pflichtangabe fehlt') === 0 && $color === 0xFF0000, $line);
 $GLOBALS['ips']['properties']['Host'] = '192.168.1.77';
 
-foreach (['ParamAussentemperatur', 'ParamVorlauftemperatur', 'ParamRuecklauftemperatur', 'ParamWarmwasser', 'ParamWarmwasserSoll', 'ParamBetriebsart'] as $p) {
+foreach (['ParamAussentemperatur', 'ParamVorlauftemperatur', 'ParamRuecklauftemperatur', 'ParamWarmwasser', 'ParamWarmwasserSoll', 'ParamBetriebsart', 'ParamBetriebsartKuehl1'] as $p) {
     $saved[$p] = $GLOBALS['ips']['properties'][$p];
     $GLOBALS['ips']['properties'][$p] = 0;
 }
 [$line, $color] = statusOf($s2);
 check('Alle Felder auf 0: ⛔ kein Feld konfiguriert, rot', strpos($line, '⛔ Kein Feld konfiguriert') === 0 && $color === 0xFF0000, $line);
 foreach ($saved as $p => $v) {
+    $GLOBALS['ips']['properties'][$p] = $v;
+}
+
+// Nur die Temperaturfelder auf 0, ein Betriebsart-Feld bleibt konfiguriert --
+// die ⛔-Meldung darf dann NICHT erscheinen (mindestens ein Feld ist ja da).
+foreach (['ParamAussentemperatur', 'ParamVorlauftemperatur', 'ParamRuecklauftemperatur', 'ParamWarmwasser', 'ParamWarmwasserSoll'] as $p) {
+    $saved2[$p] = $GLOBALS['ips']['properties'][$p];
+    $GLOBALS['ips']['properties'][$p] = 0;
+}
+[$line] = statusOf($s2);
+check('Nur Betriebsart-Felder konfiguriert (keine Temperatur): KEINE ⛔-Meldung', strpos($line, '⛔ Kein Feld konfiguriert') !== 0, $line);
+foreach ($saved2 as $p => $v) {
     $GLOBALS['ips']['properties'][$p] = $v;
 }
 
@@ -544,13 +560,20 @@ useFakeClient($fake);
 $fake->fail = [];
 $s2->Update();
 [$line, $color] = statusOf($s2);
-check('Erfolg: ✅ nennt Alter und alle Werte inkl. Betriebsart', strpos($line, '✅ ') === 0 && strpos($line, 'gelesen vor 0 s') !== false && strpos($line, 'Betriebsart Heizkreis 1 Schutzbetrieb') !== false && $color === -1, $line);
+check('Erfolg: ✅ nennt Alter und alle Werte inkl. beider Betriebsart-Felder', strpos($line, '✅ ') === 0 && strpos($line, 'gelesen vor 0 s') !== false && strpos($line, 'Betriebsart Heizkreis 1 Schutzbetrieb') !== false && strpos($line, 'Betriebsart Kühlkreis 1 Schutzbetrieb') !== false && $color === -1, $line);
 check('Erfolg: Dezimalkomma bei den Werten', strpos($line, 'Außentemperatur 11,9 °C') !== false && strpos($line, 'Warmwasser Sollwert 55,0 °C') !== false, $line);
 
 $fake->fail = [8831];
 $s2->Update();
 [$line] = statusOf($s2);
-check('Teilausfall: ⚠️ nennt Zahl und Namen des fehlenden Feldes', strpos($line, '⚠️ Adapter antwortet') === 0 && strpos($line, '1 von 6') !== false && strpos($line, 'Warmwasser Sollwert') !== false, $line);
+check('Teilausfall: ⚠️ nennt Zahl und Namen des fehlenden Feldes', strpos($line, '⚠️ Adapter antwortet') === 0 && strpos($line, '1 von 7') !== false && strpos($line, 'Warmwasser Sollwert') !== false, $line);
+$fake->fail = [];
+
+// Teilausfall speziell bei einem Betriebsart-Feld (nicht nur Temperaturfeldern).
+$fake->fail = [901];
+$s2->Update();
+[$line] = statusOf($s2);
+check('Teilausfall bei Betriebsart-Feld: ⚠️ nennt "Betriebsart Kühlkreis 1" beim Namen', strpos($line, '⚠️ Adapter antwortet') === 0 && strpos($line, 'Betriebsart Kühlkreis 1') !== false, $line);
 $fake->fail = [];
 
 $fake->unreachable = true;

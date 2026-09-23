@@ -96,11 +96,26 @@ gesetzte Attrappe statt eines echten curl-Clients -- anders als bei WPModbusHubG
 | WarmwasserSoll | 8831 ("Trinkwassertemperatur-Sollwert aktuell") | 55,0 °C |
 | Betriebsart | 700 (ENUM) | 0 = "Schutzbetrieb" |
 
+## Schreibtest durch Lütfü (Forum-Post #9, 23.09.2026, unaufgefordert)
+
+Lütfü hat selbst einen Schreibtest ueber BSB-LAN gemacht: Parameter **1200
+("Betriebsartumschaltung")** liess sich erfolgreich von "Reduziert" auf "Komfort"
+aendern und danach korrekt zuruecklesen. **Anderer Parameter als 700** (die
+Statuszeile "Betriebsart", nur lesend) -- BSB-LAN/Siemens trennen hier offenbar
+Auswahl-Parameter (schreibbar) von Status-Parameter (nur lesend), Muster aus der
+openapi.yaml (`/JS`, `/JB`) bestaetigt sich damit erstmals an echter Hardware.
+**Bewusst NICHT in v1 aufgenommen** -- Schreiben waere eine groessere
+Architekturentscheidung (Steuerhoheit, Sicherheitsimplikationen bei einer Heizung),
+die wie der Modulbau selbst erst Dietmars ausdrueckliche Freigabe braucht, nicht aus
+einem einzelnen Testerkommentar abgeleitet wird. Dokumentiert fuer eine spaetere
+Erweiterung, falls gewuenscht.
+
 ## Was bewusst NICHT Teil von v1 ist
 
 - **Keine Steuerbefehle** (nur lesend) -- obwohl BSB-LAN offiziell auch `/JS` (Schreiben)
-  und `/JB` (Liste schreibbarer Parameter) unterstuetzt. Analog zur v1-Linie aller
-  anderen WP-Module.
+  und `/JB` (Liste schreibbarer Parameter) unterstuetzt UND Lütfü das an seiner eigenen
+  Anlage bereits erfolgreich getestet hat (siehe Abschnitt oben). Analog zur v1-Linie
+  aller anderen WP-Module.
 - **Keine Leistungs-/Energiezaehler** -- `PowerID`/`EnergyID` bleiben 0.
 - **Kein `operatingModeNormID`** (siehe oben) -- braucht mehr live gesehene Betriebsart-
   Codes, bevor eine Abbildung auf standby/heating/cooling/dhw vertretbar ist.

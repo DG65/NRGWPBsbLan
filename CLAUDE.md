@@ -155,9 +155,10 @@ aufgenommen -- Lütfü braucht sie nicht, an seiner Anlage ungenutzt.
 **Update 24.09.2026 (Forum-Post #17):** Lütfü hat 0.2.0 installiert: "Betriebsart
 Kühlkreis 1 wird bei mir korrekt angezeigt. Damit passt es für meine Anlage genau so."
 Alle acht Felder (6 Temperatur/Warmwasser + 2 Betriebsart) damit vollstaendig live
-bestaetigt, keine offene Anfrage von ihm mehr. Naechste moegliche Schritte (noch nicht
-entschieden/umgesetzt): Store-Veroeffentlichung ("NRG-Stack WPBsbLan", Dietmar hatte
-das Lütfü bereits angekuendigt) und ein eigener Forumsthread fuer WPBsbLan.
+bestaetigt, keine offene Anfrage von ihm mehr. **Store-Veroeffentlichung ("NRG-Stack
+WPBsbLan") ist bereits erledigt** (Dietmar, 24.09.2026) -- offen bleibt nur noch, ob
+WPBsbLan einen eigenen Forumsthread bekommt (Muster: alle anderen WP-Module haben
+einen, `ForumHint()` liefert hier bewusst weiterhin `null` bis dahin).
 
 ## Was bewusst NICHT Teil von v1 ist
 

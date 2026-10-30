@@ -1,5 +1,10 @@
 # Changelog — NRG-Stack WPBsbLan
 
+## 0.2.1 (Build 4) — 30.10.2026
+
+- **Symcon-Review: Logging nur noch auf ausdrücklichen Klick.** Das Modul hat bisher für seine Messwerte automatisch das Logging im Symcon-Archiv eingeschaltet, ohne den Nutzer zu fragen. Das ist entfernt. Im Bereich „Allgemein“ steht jetzt ein Hinweis und der Knopf „📈 Logging für die Messwerte einschalten“ (WPBSBL_EnableArchiving()). Er schaltet das Logging für alle Messwerte (Fließkomma-Variablen) dieser Instanz ein, nie etwas aus, und meldet, für wie viele Werte er es getan hat. Schon eingeschaltetes Logging bleibt bestehen.
+- Prüfstand: neue Prüfungen (nichts wird automatisch archiviert, Klick schaltet nur Messwerte ein, zweiter Klick, kein Archiv, keine Messwerte, Knopf im Formular), drei Mutationen der Zielstellen gefangen.
+
 ## 0.2.0 (Build 3) — 23.09.2026
 
 - **Neues Feld „Betriebsart Kühlkreis 1“.** Lütfü nutzt an seiner Fujitsu Waterstage neben Heizkreis 1 (700) gelegentlich auch den Kühlbetrieb über einen eigenen, unabhängigen Parameter (901) -- jetzt als eigenes, optionales Formularfeld (0 = nicht genutzt) mit eigenen Variablen (Code + Klartext), genau wie Heizkreis 1. Heizkreis 2 (1200) und Kühlkreis 2 (1201) sind laut Lütfü an seiner Anlage vorhanden, aber ungenutzt -- bewusst nicht aufgenommen.

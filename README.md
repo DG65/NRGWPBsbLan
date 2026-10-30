@@ -1,7 +1,7 @@
 # WPBsbLan — lokale Anbindung von Heizungen/Wärmepumpen über BSB-LAN (IP-Symcon)
 
 ![Symcon](https://img.shields.io/badge/Symcon-PHPModul-blue)
-![Modul Version](https://img.shields.io/badge/Modul_Version-0.1.0-blue)
+![Modul Version](https://img.shields.io/badge/Modul_Version-0.2.1-blue)
 ![Symcon Version](https://img.shields.io/badge/Symcon_Version-9.0%2B-blue)
 ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-lightgrey)
 [![PayPal](https://img.shields.io/badge/PayPal-Me-blue?logo=paypal)](https://paypal.me/DietmarGureth)

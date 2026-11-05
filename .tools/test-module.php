@@ -597,6 +597,7 @@ $fake->fail = [8831];
 $s2->Update();
 [$line] = statusOf($s2);
 check('Teilausfall: ⚠️ nennt Zahl und Namen des fehlenden Feldes', strpos($line, '⚠️ Adapter antwortet') === 0 && strpos($line, '1 von 7') !== false && strpos($line, 'Warmwasser Sollwert') !== false, $line);
+check('Teilausfall: das nicht gelesene Feld erscheint nicht mit altem Wert unter "gelesen", die anderen schon', strpos($line, 'Warmwasser Sollwert 55,0') === false && strpos($line, 'Außentemperatur 11,9 °C') !== false, $line);
 $fake->fail = [];
 
 // Teilausfall speziell bei einem Betriebsart-Feld (nicht nur Temperaturfeldern).
@@ -610,6 +611,16 @@ $fake->unreachable = true;
 $s2->Update();
 [$line] = statusOf($s2);
 check('Nicht erreichbar: ⚠️ mit Prüfhinweis und letzten bekannten Werten', strpos($line, '⚠️ BSB-LAN-Adapter antwortet nicht') === 0 && strpos($line, 'Letzte bekannte Werte') !== false, $line);
+check('Nicht erreichbar nach erfolgreichem Zyklus: die letzten Werte sind echt (11,9 °C), nicht 0,0', strpos($line, 'Außentemperatur 11,9 °C') !== false && strpos($line, '0,0 °C') === false, $line);
+$fake->unreachable = false;
+
+// Neue Instanz, die noch nie geantwortet hat: die Variablen stehen auf 0, das sind KEINE "letzten bekannten Werte".
+$s3 = new WPBsbLan(12345);
+$s3->Create();
+$fake->unreachable = true;
+$s3->Update();
+[$line3] = statusOf($s3);
+check('Nie geantwortet: ⚠️ nennt "noch nie", aber keine erfundenen Werte (kein "0,0 °C", kein "Letzte bekannte Werte")', strpos($line3, '⚠️ BSB-LAN-Adapter antwortet nicht (letzte Antwort: noch nie)') === 0 && strpos($line3, '0,0 °C') === false && strpos($line3, 'Letzte bekannte Werte') === false, $line3);
 $fake->unreachable = false;
 
 $s2->Update();

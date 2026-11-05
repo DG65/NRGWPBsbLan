@@ -546,12 +546,21 @@ class WPBsbLan extends IPSModule
         return $ident;
     }
 
-    /** Zuletzt uebernommene Werte als Text, z. B. "Außentemperatur 11,9 °C, ...". */
-    private function lastValuesText(): string
+    /**
+     * Zuletzt uebernommene Werte als Text, z. B. "Außentemperatur 11,9 °C, ...".
+     * Vor der ersten Antwort des Adapters gibt es keine Werte: die Variablen stehen dann auf 0, das waere eine
+     * falsche Angabe ("0,0 °C"). $skipMissing laesst Felder weg, die im letzten Zyklus nicht gelesen wurden
+     * (ihr alter Wert gehoert nicht in "gelesen vor ...").
+     */
+    private function lastValuesText(bool $skipMissing = false): string
     {
+        if ($this->ReadAttributeInteger('LastSeenAt') === 0) {
+            return '';
+        }
+        $missing = $skipMissing ? array_filter(explode(',', $this->ReadAttributeString('LastMissing'))) : [];
         $parts = [];
         foreach (self::FIELD_CAPTIONS as $ident => $caption) {
-            if (!isset(self::FIELD_PROPERTIES[$ident]) || $this->ReadPropertyInteger(self::FIELD_PROPERTIES[$ident]) <= 0) {
+            if (!isset(self::FIELD_PROPERTIES[$ident]) || $this->ReadPropertyInteger(self::FIELD_PROPERTIES[$ident]) <= 0 || in_array($ident, $missing, true)) {
                 continue;
             }
             $id = $this->contractFieldID($ident);
@@ -561,7 +570,7 @@ class WPBsbLan extends IPSModule
             $parts[] = WPBSBL_Text::t($caption) . ' ' . WPBSBL_Text::zahl((float)GetValue($id)) . ' °C';
         }
         foreach (self::MODE_FIELDS as $property => $def) {
-            if ($this->ReadPropertyInteger($property) <= 0) {
+            if ($this->ReadPropertyInteger($property) <= 0 || in_array($def['ident'], $missing, true)) {
                 continue;
             }
             $id = $this->contractFieldID($def['ident'] . 'Text');
@@ -611,15 +620,15 @@ class WPBsbLan extends IPSModule
         $reachableID = $this->contractFieldID('Erreichbar');
         $reachable = ($reachableID !== 0) && (bool)GetValue($reachableID);
         $lastSeen = $this->ReadAttributeInteger('LastSeenAt');
-        $values = $this->lastValuesText();
-
         if (!$reachable) {
+            $values = $this->lastValuesText(false);
             $text = WPBSBL_Text::t('⚠️ BSB-LAN adapter does not answer (last answer: %s). Check IP address, port and, if set, the password.', $lastSeen > 0 ? $this->ageText($lastSeen) : WPBSBL_Text::t('never'));
             if ($values !== '') {
                 $text .= ' ' . WPBSBL_Text::t('Last known values: %s.', $values);
             }
             return [$text, -1];
         }
+        $values = $this->lastValuesText(true);
         if (time() - $lastCycle > 3 * $interval + 10) {
             return [WPBSBL_Text::t('⚠️ The last update was %s, one is expected every %d s -- check the timer and the instance status. Last values: %s.', $this->ageText($lastCycle), $interval, $values), -1];
         }

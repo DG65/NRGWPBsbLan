@@ -1,5 +1,9 @@
 # Changelog — NRG-Stack WPBsbLan
 
+## 0.3.1 (Build 6) — 05.11.2026
+
+- **Fix: Statuszeile zeigte erfundene Werte.** Bei einer Instanz, die noch nie eine Antwort vom BSB-LAN-Adapter bekommen hat, stand „Letzte bekannte Werte: Außentemperatur 0,0 °C, Vorlauftemperatur 0,0 °C …“, weil die angelegten Variablen auf 0 stehen. Jetzt nennt die Zeile ohne frühere Antwort keine Werte. Außerdem erscheint ein im letzten Zyklus nicht gelesenes Feld nicht mehr mit seinem alten Wert unter „gelesen vor …“. Gefunden bei der Live-Prüfung auf IPS Privat (05.11.2026). Prüfstand: drei neue Prüfungen, drei Mutationen gefangen.
+
 ## 0.3.0 (Build 5) — 05.11.2026
 
 - **Zweisprachig (Deutsch/Englisch)**, Auftrag Dietmar 05.11.2026 / SUITE.md Konvention 9. Formular, Statusmeldungen, Hinweise, Log- und Fehlertexte, Meldungen von „Logging einschalten“, Vertrags-Caption und die Namen neuer Variablen folgen der Symcon-Sprache. Quelltexte sind englisch (Code und `form.json`), die deutsche Fassung steht in `libs/locale.json`; `php .tools/locale-bauen.php` kopiert sie nach `WPBsbLan/locale.json` (Symcon liest sie nur dort). Englische Dokumentation: `README.en.md`.

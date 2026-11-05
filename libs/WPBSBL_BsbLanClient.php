@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/WPBSBL_Text.php';
+
 // WPBSBL_BsbLanClient -- schlanker HTTP-Client fuer die JSON-API eines lokalen
 // BSB-LAN-Adapters (github.com/fredlcore/bsb_lan). BSB-LAN uebersetzt den
 // Siemens-Boiler-System-Bus (BSB/LPB/PPS) verschiedenster Heizungshersteller
@@ -66,20 +68,20 @@ class WPBSBL_BsbLanClient
         ]);
         $body = curl_exec($ch);
         if ($body === false) {
-            $this->lastError = 'HTTP-Fehler: ' . curl_error($ch);
+            $this->lastError = WPBSBL_Text::t('HTTP error: %s', curl_error($ch));
             curl_close($ch);
             return null;
         }
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
         if ($status !== 200) {
-            $this->lastError = 'HTTP-Status ' . $status;
+            $this->lastError = WPBSBL_Text::t('HTTP status %d', $status);
             return null;
         }
 
         $parsed = self::parseResponseBody((string)$body);
         if ($parsed === null) {
-            $this->lastError = 'Antwort ist kein gueltiges JSON (' . substr((string)$body, 0, 120) . ')';
+            $this->lastError = WPBSBL_Text::t('Answer is not valid JSON (%s)', substr((string)$body, 0, 120));
             return null;
         }
         return $parsed;

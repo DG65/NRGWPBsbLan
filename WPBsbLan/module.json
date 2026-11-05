@@ -6,7 +6,8 @@
     "vendor": "",
     "aliases": [
         "NRG-Stack WPBsbLan",
-        "Wärmepumpe/Heizung über BSB-LAN"
+        "Wärmepumpe/Heizung über BSB-LAN",
+        "Heat pump/heating via BSB-LAN"
     ],
     "parentRequirements": [],
     "childRequirements": [],

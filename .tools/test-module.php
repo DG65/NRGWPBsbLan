@@ -34,6 +34,7 @@ const KL_WARNING = 10205;
 const KL_NOTIFY  = 10204;
 
 $GLOBALS['ips'] = [
+    'locale'     => json_decode((string)file_get_contents(__DIR__ . '/../libs/locale.json'), true)['translations']['de'],
     'profiles'   => [],
     'variables'  => [],
     'nextVarId'  => 10000,
@@ -120,8 +121,16 @@ class IPSModule
     protected $timers = [];
     public $status = 0;
 
-    public function __construct()
+    public function __construct($InstanceID = 12345)
     {
+    }
+    // Symcons Translate(): liest die locale.json des Moduls; hier die deutsche Tabelle (Standard im Pruefstand)
+    // oder nichts (Englisch, $GLOBALS['ips']['locale'] = []). Zaehlt die Aufrufe: jeder echte Aufruf
+    // kostet in Symcon ein Einlesen der locale.json (SUITE.md Stolperstein 24).
+    protected function Translate(string $text): string
+    {
+        $GLOBALS['ips']['translateCalls'] = ($GLOBALS['ips']['translateCalls'] ?? 0) + 1;
+        return ($GLOBALS['ips']['locale'] ?? [])[$text] ?? $text;
     }
     public function Create()
     {
@@ -317,7 +326,7 @@ function param(string $value, string $desc = '', string $unit = '°C'): array
 echo "Block 1: Lebenszyklus und Status\n";
 // ---------------------------------------------------------------------------
 
-$mod = new WPBsbLan();
+$mod = new WPBsbLan(12345);
 $mod->Create();
 check('WPBSBL_Active-Standard ist aus', $GLOBALS['ips']['properties']['WPBSBL_Active'] === false);
 check('Port-Standard ist 80', $GLOBALS['ips']['properties']['Port'] === 80);
@@ -517,11 +526,11 @@ check('"Über dieses Modul" steht ganz unten', ($licenseHint['caption'] ?? '') =
 
 // News-Banner (NEWS_VERSIONS-Konvention, siehe WPModbusHub-Prüfstand).
 $GLOBALS['ips']['libraryVersion'] = '';
-$newsMod = new WPBsbLan();
+$newsMod = new WPBsbLan(12345);
 $newsMod->Create();
 $formNews = json_decode($newsMod->GetConfigurationForm(), true);
 $newsPanel = findFormElement($formNews['elements'], 'NewsPanel');
-check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version 0.2.1', json_encode($newsPanel['caption'] ?? null));
+check('News-Banner erscheint bei leerem SeenNews', $newsPanel !== null && ($newsPanel['caption'] ?? '') === '🆕 Neu bis Version ' . array_key_last(WPBsbLan::NEWS_VERSIONS), json_encode($newsPanel['caption'] ?? null));
 // Bewusst eine ANDERE Version als der einzige NEWS_VERSIONS-Schluessel (0.1.0),
 // damit ein Test, der nur den Fallback (letzter Schluessel) prueft, nicht
 // zufaellig durchrutscht.
@@ -538,7 +547,7 @@ check('News-Banner ist nach AckNews() weg', findFormElement($formNewsGone['eleme
 $GLOBALS['ips']['variables'] = [];
 $GLOBALS['ips']['properties']['Host'] = '';
 $GLOBALS['ips']['properties']['WPBSBL_Active'] = false;
-$s2 = new WPBsbLan();
+$s2 = new WPBsbLan(12345);
 $s2->Create();
 [$line, $color] = statusOf($s2);
 check('Inaktiv ohne Host: ℹ️ noch nicht eingerichtet', strpos($line, 'ℹ️ Noch nicht eingerichtet') === 0 && $color === -1, $line);
@@ -608,7 +617,7 @@ $rc = new ReflectionMethod(WPBsbLan::class, 'WriteAttributeInteger');
 $rc->setAccessible(true);
 $rc->invoke($s2, 'LastCycleAt', time() - 1000);
 [$line] = statusOf($s2);
-check('Veraltet: ⚠️ meldet eine viel zu alte letzte Aktualisierung', strpos($line, '⚠️ Die letzte Aktualisierung liegt') === 0, $line);
+check('Veraltet: ⚠️ meldet eine viel zu alte letzte Aktualisierung', strpos($line, '⚠️ Die letzte Aktualisierung war vor') === 0 && strpos($line, 'erwartet wird alle') !== false, $line);
 
 // ---------------------------------------------------------------------------
 echo "Block 9: Logging nur auf Klick (Symcon-Review 30.10.2026)\n";
@@ -670,6 +679,169 @@ foreach ([
     }
     check("Alle \$this->…()-Aufrufe in $file definiert", count($missing) === 0, 'fehlt: ' . implode(', ', $missing));
 }
+
+// ---------------------------------------------------------------------------
+echo "Block 10: Zweisprachigkeit (Deutsch/Englisch) und Translate()-Kosten\n";
+// ---------------------------------------------------------------------------
+
+$libLocale = (string)file_get_contents(__DIR__ . '/../libs/locale.json');
+$deTable = json_decode($libLocale, true)['translations']['de'] ?? [];
+check('locale.json: gültig, deutsche Tabelle vorhanden', count($deTable) > 50);
+check('locale.json im Modulordner = libs/locale.json (php .tools/locale-bauen.php)', file_get_contents(__DIR__ . '/../WPBsbLan/locale.json') === $libLocale);
+
+// Alle englischen Quelltexte einsammeln: t()-Aufrufe, NEWS, Feldnamen, Betriebsart-Felder, form.json.
+$srcTexts = ['.' => 'Text::zahl'];
+$litRe = "('(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\")";
+$unq = function (string $lit): string {
+    return $lit[0] === "'" ? str_replace(["\\'", '\\\\'], ["'", '\\'], substr($lit, 1, -1)) : stripcslashes(substr($lit, 1, -1));
+};
+foreach ([__DIR__ . '/../WPBsbLan/module.php', __DIR__ . '/../libs/WPBSBL_BsbLanClient.php'] as $file) {
+    $code = (string)file_get_contents($file);
+    preg_match_all('/WPBSBL_Text::t\(\s*' . $litRe . '/', $code, $mm);
+    foreach ($mm[1] as $lit) {
+        $srcTexts[$unq($lit)] = basename($file);
+    }
+}
+foreach (WPBsbLan::NEWS_VERSIONS as $lines) {
+    foreach ($lines as $line) {
+        $srcTexts[$line] = 'NEWS';
+    }
+}
+$refl = new ReflectionClass(WPBsbLan::class);
+foreach ($refl->getConstant('FIELD_CAPTIONS') as $cap) {
+    $srcTexts[$cap] = 'FIELD_CAPTIONS';
+}
+foreach ($refl->getConstant('MODE_FIELDS') as $def) {
+    $srcTexts[$def['caption']] = 'MODE_FIELDS';
+    $srcTexts[$def['codeCaption']] = 'MODE_FIELDS';
+}
+$walkForm = function ($node) use (&$walkForm, &$srcTexts): void {
+    foreach ((array)$node as $k => $v) {
+        if (in_array($k, ['caption', 'confirm', 'label'], true) && is_string($v) && $v !== '') {
+            $srcTexts[$v] = 'form.json';
+        } elseif (is_array($v)) {
+            $walkForm($v);
+        }
+    }
+};
+$walkForm(json_decode((string)file_get_contents(__DIR__ . '/../WPBsbLan/form.json'), true));
+check('Quelltexte gefunden (t(), NEWS, Felder, form.json)', count($srcTexts) > 50, (string)count($srcTexts));
+
+$fehlt = [];
+$platz = [];
+foreach ($srcTexts as $text => $quelle) {
+    if (!isset($deTable[$text])) {
+        $fehlt[] = $quelle . ': ' . $text;
+        continue;
+    }
+    $n1 = preg_match_all('/%(?:\d+\$)?[0-9]*[sdX]/', str_replace('%%', '', (string)$text));
+    $n2 = preg_match_all('/%(?:\d+\$)?[0-9]*[sdX]/', str_replace('%%', '', $deTable[$text]));
+    if ($n1 !== $n2) {
+        $platz[] = $text;
+    }
+}
+check('jeder Quelltext hat eine deutsche Fassung', $fehlt === [], implode(' | ', array_slice($fehlt, 0, 5)) . ' (' . count($fehlt) . ')');
+check('Platzhalter: englischer und deutscher Text haben gleich viele', $platz === [], implode(' | ', array_slice($platz, 0, 5)));
+$ueberzaehlig = array_diff(array_keys($deTable), array_keys($srcTexts));
+check('locale.json hat keine Einträge ohne Quelltext (verwaist)', $ueberzaehlig === [], implode(' | ', array_slice($ueberzaehlig, 0, 5)));
+// Markennamen mit Umlaut (Brötje) sind im Englischen erlaubt.
+$deutschImQuelltext = array_filter(array_keys($srcTexts), function ($t) {
+    return preg_match('/[äöüÄÖÜß]/u', str_replace('Brötje', 'Broetje', $t)) === 1;
+});
+check('englische Quelltexte enthalten keine Umlaute (außer dem Markennamen Brötje)', $deutschImQuelltext === [], implode(' | ', array_map(function ($t) { return mb_substr($t, 0, 50); }, array_slice($deutschImQuelltext, 0, 3))));
+
+$captionsOf = function (array $node) use (&$captionsOf): array {
+    $out = [];
+    foreach ($node as $k => $v) {
+        if (in_array($k, ['caption', 'confirm', 'label'], true) && is_string($v)) {
+            $out[] = $v;
+        } elseif (is_array($v)) {
+            $out = array_merge($out, $captionsOf($v));
+        }
+    }
+    return $out;
+};
+$germanLeft = function (string $text): bool {
+    return preg_match('/[äöüÄÖÜß]|\b(und|nicht|oder|wird|Heizkreis|Verbindung|Schalter|aktiv|eingeschaltet|Fehler|antwortet|Wärme\w*)\b/u', str_replace('Brötje', 'Broetje', $text)) === 1;
+};
+$cycle = function ($mod) {
+    $GLOBALS['ips']['variables'] = [];
+    $fk = new FakeBsbLanClient();
+    $fk->values = [8700 => param('11.9'), 8412 => param('23.8'), 8410 => param('33.4'), 8830 => param('52.5'), 8831 => param('55.0'),
+        700 => param('0', 'Schutzbetrieb', ''), 901 => param('0', 'Schutzbetrieb', '')];
+    useFakeClient($fk);
+    $mod->Update();
+};
+$GLOBALS['ips']['properties']['Host'] = '192.168.1.77';
+$GLOBALS['ips']['properties']['WPBSBL_Active'] = true;
+
+// --- Deutsch
+$GLOBALS['ips']['locale'] = json_decode($libLocale, true)['translations']['de'];
+$de = new WPBsbLan(12345);
+$de->Create();
+$cycle($de);
+check('Deutsch: Variablennamen "Außentemperatur", "Erreichbar", "Betriebsart Heizkreis 1 (Code)"', ($GLOBALS['ips']['variables']['Aussentemperatur']['name'] ?? '') === 'Außentemperatur'
+    && ($GLOBALS['ips']['variables']['Erreichbar']['name'] ?? '') === 'Erreichbar' && ($GLOBALS['ips']['variables']['Betriebsart']['name'] ?? '') === 'Betriebsart Heizkreis 1 (Code)'
+    && ($GLOBALS['ips']['variables']['BetriebsartKuehl1Text']['name'] ?? '') === 'Betriebsart Kühlkreis 1');
+$formDe = json_decode($de->GetConfigurationForm(), true);
+check('Deutsch: Formular deutsch (Abschnitt, Parameterfeld, Status)', strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), '"🌡️ Parameter-Zuordnung"') !== false
+    && strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Woher bekomme ich die richtige Parameternummer?') !== false && strpos($formDe['status'][0]['caption'], 'nicht erreichbar') !== false);
+check('Deutsch: Statuszeile mit Dezimalkomma', strpos(statusOf($de)[0], 'Außentemperatur 11,9 °C') !== false, statusOf($de)[0]);
+check('Deutsch: "Neu"-Banner zeigt die deutsche Zeile zur neuesten Version', strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Das Modul ist jetzt durchgehend zweisprachig') !== false);
+check('Deutsch: GetFunctions-Caption deutsch', $de->GetFunctions()[0]['Caption'] === 'Wärmepumpe (BSB-LAN)');
+
+// --- Englisch: keine deutschen Reste
+$GLOBALS['ips']['locale'] = [];
+$en = new WPBsbLan(12345);
+$en->Create();
+$cycle($en);
+check('Englisch: Variablennamen "Outdoor temperature", "Reachable", "Operating mode heating circuit 1 (code)"', ($GLOBALS['ips']['variables']['Aussentemperatur']['name'] ?? '') === 'Outdoor temperature'
+    && ($GLOBALS['ips']['variables']['Erreichbar']['name'] ?? '') === 'Reachable' && ($GLOBALS['ips']['variables']['Betriebsart']['name'] ?? '') === 'Operating mode heating circuit 1 (code)'
+    && ($GLOBALS['ips']['variables']['BetriebsartKuehl1Text']['name'] ?? '') === 'Operating mode cooling circuit 1');
+$formEn = json_decode($en->GetConfigurationForm(), true);
+$rest = array_values(array_filter($captionsOf($formEn), $germanLeft));
+check('Englisch: Formular ohne deutsche Reste', $rest === [], implode(' | ', array_map(function ($t) { return mb_substr($t, 0, 70); }, array_slice($rest, 0, 4))));
+check('Englisch: Status-Texte (form.json status) ohne deutsche Reste', count(array_filter(array_column($formEn['status'], 'caption'), $germanLeft)) === 0);
+check('Englisch: Statuszeile mit Dezimalpunkt', strpos(statusOf($en)[0], 'Outdoor temperature 11.9 °C') !== false, statusOf($en)[0]);
+check('Englisch: "Neu"-Banner zeigt die englische Zeile', strpos(json_encode($formEn), 'The module is now fully bilingual') !== false);
+check('Englisch: GetFunctions-Caption englisch', $en->GetFunctions()[0]['Caption'] === 'Heat pump (BSB-LAN)');
+$GLOBALS['ips']['properties']['WPBSBL_Active'] = false;
+check('Englisch: Statuszeile "Switched off"', strpos(statusOf($en)[0], 'ℹ️ Switched off') === 0, statusOf($en)[0]);
+$GLOBALS['ips']['properties']['WPBSBL_Active'] = true;
+$GLOBALS['ips']['properties']['Host'] = '';
+check('Englisch: Pflichtangabe fehlt', strpos(statusOf($en)[0], '⛔ Required entry missing') === 0, statusOf($en)[0]);
+$GLOBALS['ips']['properties']['Host'] = '192.168.1.77';
+$enArchive = $en->EnableArchiving();
+check('Englisch: EnableArchiving-Meldung englisch', $enArchive !== '' && !$germanLeft($enArchive), $enArchive);
+$refused = new WPBSBL_BsbLanClient('127.0.0.1', 1);
+$refused->queryParameters([8700]);
+check('Englisch: Client-Fehlertext englisch (Verbindung abgelehnt)', strpos($refused->lastError, 'HTTP error:') === 0 && !$germanLeft($refused->lastError), $refused->lastError);
+
+// --- Kosten: Symcons Translate() liest bei jedem Aufruf die locale.json -- hoechstens einmal je Text und Prozess
+$GLOBALS['ips']['locale'] = json_decode($libLocale, true)['translations']['de'];
+$cost = new WPBsbLan(12345);
+$cost->Create();
+$GLOBALS['ips']['translateCalls'] = 0;
+$cycle($cost);
+$cost->GetFunctions();
+$afterFirst = $GLOBALS['ips']['translateCalls'];
+for ($i = 0; $i < 20; $i++) {
+    $cycle($cost);
+    $cost->GetFunctions();
+}
+check('Translate-Kosten: ein Lesezyklus samt Vertragsabfrage fragt Symcon nur beim ersten Mal', $GLOBALS['ips']['translateCalls'] === $afterFirst && $afterFirst < 30, "erste Runde $afterFirst Aufrufe, nach 21 Runden " . $GLOBALS['ips']['translateCalls']);
+$GLOBALS['ips']['translateCalls'] = 0;
+$cost->GetConfigurationForm();
+$formFirst = $GLOBALS['ips']['translateCalls'];
+$GLOBALS['ips']['translateCalls'] = 0;
+for ($i = 0; $i < 10; $i++) {
+    $cost->GetConfigurationForm();
+}
+check('Translate-Kosten: Formular fragt jeden Text höchstens einmal (danach 0 Aufrufe)', $GLOBALS['ips']['translateCalls'] === 0 && $formFirst <= count($srcTexts), "erstes Formular $formFirst Aufrufe, weitere zehn: " . $GLOBALS['ips']['translateCalls']);
+// Ein Uebersetzer, der wirft (Instanz weg), darf den Zyklus nicht abbrechen
+WPBSBL_Text::setzen(WPBSBL_Text::mitMerkliste(function (string $t): string { throw new RuntimeException('Instanz weg'); }));
+check('Übersetzer wirft: Quelltext bleibt stehen, nichts bricht ab', WPBSBL_Text::t('Hot water') === 'Hot water');
+$GLOBALS['ips']['locale'] = json_decode($libLocale, true)['translations']['de'];
 
 // ---------------------------------------------------------------------------
 echo "\n";

@@ -1,7 +1,9 @@
-# WPBsbLan — lokale Anbindung von Heizungen/Wärmepumpen über BSB-LAN (IP-Symcon)
+🇬🇧 [English version](README.en.md)
+
+# WPBsbLan — lokale Anbindung von Heizungen/Wärmepumpen über BSB-LAN (Symcon)
 
 ![Symcon](https://img.shields.io/badge/Symcon-PHPModul-blue)
-![Modul Version](https://img.shields.io/badge/Modul_Version-0.2.1-blue)
+![Modul Version](https://img.shields.io/badge/Modul_Version-0.3.0-blue)
 ![Symcon Version](https://img.shields.io/badge/Symcon_Version-9.0%2B-blue)
 ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-lightgrey)
 [![PayPal](https://img.shields.io/badge/PayPal-Me-blue?logo=paypal)](https://paypal.me/DietmarGureth)
@@ -23,6 +25,10 @@ Stand 0.1.0 (23.09.2026) — **bewusst nur lesend** (keine Steuerbefehle, obwohl
 Das JSON-Schema (Feldnamen, Datenformat) stammt direkt aus der offiziellen `openapi.yaml`-Spezifikation des BSB-LAN-Projekts, nicht aus einer Forenzusammenfassung.
 
 **Ausgelesen werden:** Außentemperatur, Vorlauf-/Rücklauftemperatur, Warmwasser Ist/Soll und Betriebsart (Klartext liefert BSB-LAN direkt mit) — noch keine Leistungs- oder Energiezähler.
+
+## Sprachen
+
+Das Modul ist zweisprachig (Deutsch/Englisch): Formular, Statusmeldungen, Hinweise und die Namen neuer Variablen folgen der Symcon-Sprache. Die Quelltexte sind englisch, die deutsche Fassung steht in `libs/locale.json` (`php .tools/locale-bauen.php` kopiert sie in den Modulordner).
 
 ## Verbund
 

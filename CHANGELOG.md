@@ -1,5 +1,13 @@
 # Changelog — NRG-Stack WPBsbLan
 
+## 0.3.0 (Build 5) — 05.11.2026
+
+- **Zweisprachig (Deutsch/Englisch)**, Auftrag Dietmar 05.11.2026 / SUITE.md Konvention 9. Formular, Statusmeldungen, Hinweise, Log- und Fehlertexte, Meldungen von „Logging einschalten“, Vertrags-Caption und die Namen neuer Variablen folgen der Symcon-Sprache. Quelltexte sind englisch (Code und `form.json`), die deutsche Fassung steht in `libs/locale.json`; `php .tools/locale-bauen.php` kopiert sie nach `WPBsbLan/locale.json` (Symcon liest sie nur dort). Englische Dokumentation: `README.en.md`.
+- **Übersetzung ohne den Automat-Fehler** (SUITE.md Stolperstein 24): `WPBSBL_Text` fragt Symcon je Text höchstens einmal je Prozess und merkt sich die Antwort; Lesezyklus, Vertragsabfrage und Formular kosten danach keinen `Translate()`-Aufruf mehr. Wirft der Übersetzer (z. B. Instanz gelöscht), bleibt der englische Text stehen. Kein eigenes Lesen der `locale.json`.
+- Bestehende Variablen behalten ihren Namen, neue werden in der Symcon-Sprache angelegt. Idents, Properties, Funktionen und der Vertrag mit WPHub/EMS/Dashboard bleiben unverändert. Die Betriebsart-Klartexte kommen unverändert von BSB-LAN (`desc`), sie sind nicht Teil dieser Übersetzung.
+- Lizenz-Link zeigt auf `main` statt `beta`.
+- Prüfstand: Block 10 prüft Vollständigkeit der deutschen Fassung, gleiche Platzhalter, keine verwaisten Einträge, das englische Formular ohne deutsche Reste, Dezimalkomma/-punkt, den Client-Fehlertext und dass nach dem ersten Lauf kein `Translate()`-Aufruf mehr anfällt.
+
 ## 0.2.1 (Build 4) — 30.10.2026
 
 - **Symcon-Review: Logging nur noch auf ausdrücklichen Klick.** Das Modul hat bisher für seine Messwerte automatisch das Logging im Symcon-Archiv eingeschaltet, ohne den Nutzer zu fragen. Das ist entfernt. Im Bereich „Allgemein“ steht jetzt ein Hinweis und der Knopf „📈 Logging für die Messwerte einschalten“ (WPBSBL_EnableArchiving()). Er schaltet das Logging für alle Messwerte (Fließkomma-Variablen) dieser Instanz ein, nie etwas aus, und meldet, für wie viele Werte er es getan hat. Schon eingeschaltetes Logging bleibt bestehen.

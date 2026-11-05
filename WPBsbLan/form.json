@@ -2,56 +2,56 @@
     "elements": [
         {
             "type": "ExpansionPanel",
-            "caption": "📖 Dokumentation & Hilfe",
+            "caption": "📖 Documentation & help",
             "expanded": false,
             "items": [
                 {
                     "type": "Label",
                     "name": "VersionInfo",
-                    "caption": "ℹ️ WPBsbLan Version -- lokale Anbindung von Heizungen/Wärmepumpen über einen BSB-LAN-Adapter."
+                    "caption": ""
                 },
                 {
                     "type": "Label",
-                    "caption": "Liest eine Heizung/Wärmepumpe über einen lokalen BSB-LAN-Adapter (github.com/fredlcore/bsb_lan) aus -- ohne Internet, ohne Herstellerkonto. Details: https://github.com/DG65/NRGWPBsbLan"
+                    "caption": "Reads a heating system/heat pump via a local BSB-LAN adapter (github.com/fredlcore/bsb_lan) -- without internet, without a manufacturer account. Details: https://github.com/DG65/NRGWPBsbLan"
                 },
                 {
                     "type": "Label",
-                    "caption": "Ablauf: 1. IP-Adresse (und ggf. Port/Passwort) des BSB-LAN-Adapters eintragen → 2. die sechs Parameternummern für deine Anlage prüfen/anpassen (vorbelegt mit an einer Fujitsu Waterstage bestätigten Werten) → 3. Übernehmen → 4. „WPBsbLan aktiv“ einschalten und erneut übernehmen."
+                    "caption": "Steps: 1. Enter the IP address (and, if needed, port/password) of the BSB-LAN adapter → 2. Check/adjust the parameter numbers for your system (pre-filled with values confirmed on a Fujitsu Waterstage) → 3. Apply → 4. Switch on \"WPBsbLan active\" and apply again."
                 },
                 {
                     "type": "Button",
-                    "caption": "🔄 Übernehmen erzwingen (ohne Formularänderung)",
-                    "confirm": "Wirklich ApplyChanges() erzwingen? Praktisch direkt nach einem Modul-Update über die Modulverwaltung.",
-                    "onClick": "IPS_ApplyChanges($id); echo '✅ ApplyChanges() ausgeführt.';"
+                    "caption": "🔄 Force apply (without a form change)",
+                    "confirm": "Really force ApplyChanges()? Handy right after a module update via the module control.",
+                    "onClick": "IPS_ApplyChanges($id); echo '✅ ApplyChanges()';"
                 }
             ]
         },
         {
             "type": "ExpansionPanel",
             "name": "GeneralPanel",
-            "caption": "🔧 Allgemein",
+            "caption": "🔧 General",
             "expanded": true,
             "items": [
                 {
                     "type": "CheckBox",
                     "name": "WPBSBL_Active",
-                    "caption": "WPBsbLan aktiv"
+                    "caption": "WPBsbLan active"
                 },
                 {
                     "type": "NumberSpinner",
                     "name": "WPBSBL_Interval",
-                    "caption": "Aktualisierungsintervall (Sekunden)",
+                    "caption": "Update interval (seconds)",
                     "minimum": 30,
                     "maximum": 600,
                     "suffix": " s"
                 },
                 {
                     "type": "Label",
-                    "caption": "📈 Archivierung: Das Modul schaltet das Logging im Symcon-Archiv nie von selbst ein. Mit dem Knopf unten aktivierst du es bewusst für alle Messwerte (Fließkomma-Variablen) dieser Instanz, z. B. für Diagramme und Auswertungen. Bereits eingeschaltetes Logging bleibt unangetastet."
+                    "caption": "📈 Archiving: the module never switches on logging in the Symcon archive by itself. With the button below you deliberately enable it for all measured values (floating-point variables) of this instance, e.g. for charts and evaluations. Logging that is already enabled stays untouched."
                 },
                 {
                     "type": "Button",
-                    "caption": "📈 Logging für die Messwerte einschalten",
+                    "caption": "📈 Enable logging for the measured values",
                     "onClick": "echo WPBSBL_EnableArchiving($id);"
                 }
             ]
@@ -59,7 +59,7 @@
         {
             "type": "ExpansionPanel",
             "name": "ConnectionPanel",
-            "caption": "🔌 BSB-LAN-Adapter",
+            "caption": "🔌 BSB-LAN adapter",
             "expanded": true,
             "items": [
                 {
@@ -73,7 +73,7 @@
                         {
                             "type": "ValidationTextBox",
                             "name": "Host",
-                            "caption": "IP-Adresse / Hostname des BSB-LAN-Adapters"
+                            "caption": "IP address / host name of the BSB-LAN adapter"
                         },
                         {
                             "type": "NumberSpinner",
@@ -90,12 +90,12 @@
                         {
                             "type": "CheckBox",
                             "name": "UseHttps",
-                            "caption": "HTTPS statt HTTP"
+                            "caption": "HTTPS instead of HTTP"
                         },
                         {
                             "type": "PasswordTextBox",
                             "name": "Password",
-                            "caption": "BSB-LAN-Passwort (falls eingerichtet, sonst leer lassen)"
+                            "caption": "BSB-LAN password (if set up, otherwise leave empty)"
                         }
                     ]
                 }
@@ -104,12 +104,12 @@
         {
             "type": "ExpansionPanel",
             "name": "ParameterPanel",
-            "caption": "🌡️ Parameter-Zuordnung",
+            "caption": "🌡️ Parameter assignment",
             "expanded": true,
             "items": [
                 {
                     "type": "Label",
-                    "caption": "BSB-LAN-Parameternummern sind je Anlage unterschiedlich -- die Vorbelegung stammt von einer an einer echten Fujitsu Waterstage (Siemens RVS21.831/127) bestätigten Anlage. Bei einer anderen Heizung/Wärmepumpe ggf. anpassen (0 = Feld nicht vorhanden/nicht genutzt)."
+                    "caption": "BSB-LAN parameter numbers differ from system to system -- the pre-filled values come from a real Fujitsu Waterstage (Siemens RVS21.831/127) where they were confirmed. Adjust them if needed for another heating system/heat pump (0 = field not present/not used)."
                 },
                 {
                     "type": "RowLayout",
@@ -117,20 +117,20 @@
                         {
                             "type": "NumberSpinner",
                             "name": "ParamAussentemperatur",
-                            "caption": "Außentemperatur",
+                            "caption": "Outdoor temperature",
                             "minimum": 0,
                             "maximum": 99999
                         },
                         {
                             "type": "PopupButton",
-                            "caption": "Woher bekomme ich die richtige Parameternummer?",
+                            "caption": "Where do I get the right parameter number?",
                             "width": "480px",
                             "popup": {
-                                "caption": "Woher bekomme ich die richtige Parameternummer?",
+                                "caption": "Where do I get the right parameter number?",
                                 "items": [
                                     {
                                         "type": "Label",
-                                        "caption": "Im BSB-LAN-Webinterface unter „Einstellungen“ bzw. den Kategorien -- dort steht die Parameternummer direkt neben dem jeweiligen Wert. Alternativ liefert der URL-Aufruf http://<deine-bsb-lan-adresse>/JQ=<Nummer> im Browser eine JSON-Antwort mit Name und aktuellem Wert zum Gegenprüfen."
+                                        "caption": "In the BSB-LAN web interface under \"Settings\" or the categories -- the parameter number is shown right next to the respective value. Alternatively, calling the URL http://<your-bsb-lan-address>/JQ=<number> in the browser returns a JSON answer with the name and current value for cross-checking."
                                     }
                                 ]
                             }
@@ -143,14 +143,14 @@
                         {
                             "type": "NumberSpinner",
                             "name": "ParamVorlauftemperatur",
-                            "caption": "Vorlauftemperatur",
+                            "caption": "Flow temperature",
                             "minimum": 0,
                             "maximum": 99999
                         },
                         {
                             "type": "NumberSpinner",
                             "name": "ParamRuecklauftemperatur",
-                            "caption": "Rücklauftemperatur",
+                            "caption": "Return temperature",
                             "minimum": 0,
                             "maximum": 99999
                         }
@@ -162,14 +162,14 @@
                         {
                             "type": "NumberSpinner",
                             "name": "ParamWarmwasser",
-                            "caption": "Warmwasser Ist",
+                            "caption": "Hot water actual",
                             "minimum": 0,
                             "maximum": 99999
                         },
                         {
                             "type": "NumberSpinner",
                             "name": "ParamWarmwasserSoll",
-                            "caption": "Warmwasser Soll",
+                            "caption": "Hot water target",
                             "minimum": 0,
                             "maximum": 99999
                         }
@@ -181,14 +181,14 @@
                         {
                             "type": "NumberSpinner",
                             "name": "ParamBetriebsart",
-                            "caption": "Betriebsart Heizkreis 1 (Klartext kommt direkt von BSB-LAN mit)",
+                            "caption": "Operating mode heating circuit 1 (the plain-text name comes directly from BSB-LAN)",
                             "minimum": 0,
                             "maximum": 99999
                         },
                         {
                             "type": "NumberSpinner",
                             "name": "ParamBetriebsartKuehl1",
-                            "caption": "Betriebsart Kühlkreis 1",
+                            "caption": "Operating mode cooling circuit 1",
                             "minimum": 0,
                             "maximum": 99999
                         }
@@ -201,7 +201,7 @@
         {
             "code": 201,
             "icon": "error",
-            "caption": "BSB-LAN-Adapter nicht erreichbar -- IP-Adresse/Port/Passwort prüfen"
+            "caption": "BSB-LAN adapter not reachable -- check IP address/port/password"
         }
     ]
 }

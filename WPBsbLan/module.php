@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/../libs/WPBSBL_Text.php';
 require_once __DIR__ . '/../libs/WPBSBL_BsbLanClient.php';
 
 // NRG-Stack WPBsbLan -- lokale Anbindung von Heizungen/Waermepumpen ueber
@@ -46,31 +47,36 @@ require_once __DIR__ . '/../libs/WPBSBL_BsbLanClient.php';
 class WPBsbLan extends IPSModule
 {
     // Verbund-Konvention "NEWS_VERSIONS" (SUITE.md "Einheitliche Formular-Optik"
-    // Punkt 1): Schluessel = Version ohne Beta-/Build-Suffix, Wert = Zeilen.
+    // Punkt 1): Schluessel = Version ohne Beta-/Build-Suffix, Wert = Zeilen. Die Zeilen
+    // sind englische Quelltexte, die deutsche Fassung steht in locale.json.
     const NEWS_VERSIONS = [
         '0.1.0' => [
-            'Erste Version: Heizungen/Wärmepumpen über einen lokalen BSB-LAN-Adapter auslesen -- Außen-, Vorlauf-, Rücklauftemperatur, Warmwasser Ist/Soll und Betriebsart, alle Parameternummern frei einstellbar.',
+            'First version: read heating systems/heat pumps via a local BSB-LAN adapter -- outdoor, flow and return temperature, hot water actual/target and operating mode, all parameter numbers freely adjustable.',
         ],
         '0.1.1' => [
-            '„Betriebsart“ heißt jetzt „Betriebsart Heizkreis 1“ -- an mehrkreisigen Anlagen gibt es eigene, unabhängige Parameter je Heiz-/Kühlkreis, die sich nicht automatisch mitändern.',
+            '"Operating mode" is now called "Operating mode heating circuit 1" -- multi-circuit systems have their own, independent parameters for each heating/cooling circuit, which do not change automatically along.',
         ],
         '0.2.0' => [
-            'Neues Feld „Betriebsart Kühlkreis 1“ -- eigener, unabhängiger Parameter für den Kühlbetrieb, ergänzend zu „Betriebsart Heizkreis 1“.',
+            'New field "Operating mode cooling circuit 1" -- its own, independent parameter for cooling mode, in addition to "Operating mode heating circuit 1".',
         ],
         '0.2.1' => [
-            'Das Logging im Symcon-Archiv wird nicht mehr von selbst eingeschaltet. Im Bereich „Allgemein“ gibt es dafür den Knopf „Logging für die Messwerte einschalten“, damit du es bewusst aktivierst (Symcon-Review). Bereits eingeschaltetes Logging bleibt unangetastet.',
+            'Logging in the Symcon archive is no longer switched on automatically. In the "General" section there is the button "Enable logging for the measured values", so you enable it deliberately (Symcon review). Logging that is already enabled stays untouched.',
+        ],
+        '0.3.0' => [
+            'The module is now fully bilingual (German/English): form, status messages, notes and the names of new variables follow the Symcon language.',
         ],
     ];
     private const LIBRARY_GUID = '{61F8D0DA-6E1F-497F-9A1A-AC797E298A35}';
 
-    // Anzeigenamen der sechs Felder, in Anlegereihenfolge -- genutzt von
-    // maintainDeviceVariables() und der Statuszeile.
+    // Anzeigenamen der Felder (englische Quelltexte, uebersetzt beim Anzeigen), in
+    // Anlegereihenfolge -- genutzt von maintainDeviceVariables() und der Statuszeile.
+    // Die Idents bleiben deutsch: sie sind der Vertrag mit WPHub/EMS/Dashboard.
     private const FIELD_CAPTIONS = [
-        'Aussentemperatur'    => 'Außentemperatur',
-        'Vorlauftemperatur'   => 'Vorlauftemperatur',
-        'Ruecklauftemperatur' => 'Rücklauftemperatur',
-        'Warmwasser'          => 'Warmwasser',
-        'WarmwasserSoll'      => 'Warmwasser Sollwert',
+        'Aussentemperatur'    => 'Outdoor temperature',
+        'Vorlauftemperatur'   => 'Flow temperature',
+        'Ruecklauftemperatur' => 'Return temperature',
+        'Warmwasser'          => 'Hot water',
+        'WarmwasserSoll'      => 'Hot water setpoint',
     ];
     // Property-Name je Ident -- Nutzer traegt hier seine eigene BSB-LAN-
     // Parameternummer ein, 0 = Feld nicht vorhanden/nicht genutzt.
@@ -102,9 +108,19 @@ class WPBsbLan extends IPSModule
     // Variablen (Ident = Code/INTEGER, Ident+'Text' = Klartext aus BSB-LANs
     // eigenem 'desc'-Feld/STRING, keine lokale Enum-Tabelle noetig).
     private const MODE_FIELDS = [
-        'ParamBetriebsart'       => ['ident' => 'Betriebsart',        'caption' => 'Betriebsart Heizkreis 1'],
-        'ParamBetriebsartKuehl1' => ['ident' => 'BetriebsartKuehl1',  'caption' => 'Betriebsart Kühlkreis 1'],
+        'ParamBetriebsart'       => ['ident' => 'Betriebsart',        'caption' => 'Operating mode heating circuit 1', 'codeCaption' => 'Operating mode heating circuit 1 (code)'],
+        'ParamBetriebsartKuehl1' => ['ident' => 'BetriebsartKuehl1',  'caption' => 'Operating mode cooling circuit 1', 'codeCaption' => 'Operating mode cooling circuit 1 (code)'],
     ];
+
+    public function __construct($InstanceID)
+    {
+        parent::__construct($InstanceID);
+        // Statuszeile, Formular und Variablennamen uebersetzen ueber WPBSBL_Text (englische Quelltexte, Deutsch in
+        // locale.json); jeder Text fragt Symcon hoechstens einmal je Prozess (SUITE.md Stolperstein 24).
+        WPBSBL_Text::setzen(WPBSBL_Text::mitMerkliste(function (string $text): string {
+            return $this->Translate($text);
+        }));
+    }
 
     public function Create()
     {
@@ -171,12 +187,14 @@ class WPBsbLan extends IPSModule
 
     public function GetConfigurationForm()
     {
-        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        // Formulartexte der form.json sind englische Quelltexte; die dynamisch gebauten Teile unten
+        // uebersetzen sich selbst (nicht doppelt uebersetzen).
+        $form = WPBSBL_Text::formular(json_decode(file_get_contents(__DIR__ . '/form.json'), true));
 
         $libraryInfo = @json_decode((string)@file_get_contents(__DIR__ . '/../library.json'), true);
         $libraryVersion = (is_array($libraryInfo) && isset($libraryInfo['version'])) ? (string)$libraryInfo['version'] : '?';
         $this->updateFormElement($form['elements'], 'VersionInfo', [
-            'caption' => 'ℹ️ WPBsbLan Version ' . $libraryVersion . ' -- lokale Anbindung von Heizungen/Wärmepumpen über einen BSB-LAN-Adapter.',
+            'caption' => WPBSBL_Text::t('ℹ️ WPBsbLan version %s -- local connection of heating systems/heat pumps via a BSB-LAN adapter.', $libraryVersion),
         ]);
 
         [$statusText, $statusColor] = $this->statusLine();
@@ -226,15 +244,15 @@ class WPBsbLan extends IPSModule
         $multi = count($pending) > 1;
         foreach ($pending as $ver => $lines) {
             if ($multi) {
-                $items[] = ['type' => 'Label', 'caption' => 'Version ' . $ver . ':'];
+                $items[] = ['type' => 'Label', 'caption' => WPBSBL_Text::t('Version %s:', $ver)];
             }
             foreach ($lines as $line) {
-                $items[] = ['type' => 'Label', 'caption' => '• ' . $line];
+                $items[] = ['type' => 'Label', 'caption' => '• ' . WPBSBL_Text::t($line)];
             }
         }
-        $items[] = ['type' => 'Button', 'caption' => 'Verstanden – nicht mehr anzeigen', 'onClick' => 'WPBSBL_AckNews($id);'];
+        $items[] = ['type' => 'Button', 'caption' => WPBSBL_Text::t('Understood – do not show again'), 'onClick' => 'WPBSBL_AckNews($id);'];
         $latest = array_key_last($pending);
-        return ['type' => 'ExpansionPanel', 'name' => 'NewsPanel', 'caption' => '🆕 Neu bis Version ' . $latest, 'expanded' => true, 'items' => $items];
+        return ['type' => 'ExpansionPanel', 'name' => 'NewsPanel', 'caption' => WPBSBL_Text::t('🆕 New up to version %s', $latest), 'expanded' => true, 'items' => $items];
     }
 
     public function AckNews(): void
@@ -257,11 +275,11 @@ class WPBsbLan extends IPSModule
             'type'     => 'ExpansionPanel',
             'name'     => 'PurposeIntroPanel',
             'expanded' => true,
-            'caption'  => '👋  Wozu dieses Modul?',
+            'caption'  => WPBSBL_Text::t('👋  What is this module for?'),
             'items'    => [
-                ['type' => 'Label', 'caption' => 'WPBsbLan liest eine Heizung oder Wärmepumpe über einen lokalen BSB-LAN-Adapter aus -- ohne Internet, ohne Herstellerkonto. BSB-LAN ist eine verbreitete Open-Source-Hardware/-Firmware, die den Siemens-Heizungsbus (BSB/LPB/PPS) vieler Hersteller (Atlantic, Brötje, Elco, Fujitsu Waterstage u. a. mit Siemens-RVS-/LMU-Reglern) in eine lokale HTTP/JSON-Schnittstelle übersetzt.'],
-                ['type' => 'Label', 'caption' => 'Anders als bei den übrigen Wärmepumpen-Modulen des Verbunds sind die Parameternummern für die einzelnen Werte NICHT einheitlich -- jede BSB-LAN-Anlage kann eigene Nummern haben. Deshalb trägst du sie unten selbst ein; vorbelegt sind die an einer echten Fujitsu Waterstage (Siemens RVS21.831/127) bestätigten Werte als Startpunkt.'],
-                ['type' => 'Button', 'caption' => 'Verstanden – nicht mehr anzeigen', 'onClick' => 'WPBSBL_AckPurposeIntro($id);'],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('WPBsbLan reads a heating system or heat pump via a local BSB-LAN adapter -- without internet, without a manufacturer account. BSB-LAN is a widespread open-source hardware/firmware that translates the Siemens heating bus (BSB/LPB/PPS) of many manufacturers (Atlantic, Brötje, Elco, Fujitsu Waterstage and others with Siemens RVS/LMU controllers) into a local HTTP/JSON interface.')],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('Unlike the other heat pump modules of the family, the parameter numbers for the individual values are NOT uniform -- every BSB-LAN installation can have its own numbers. So you enter them yourself below; the values confirmed on a real Fujitsu Waterstage (Siemens RVS21.831/127) are pre-filled as a starting point.')],
+                ['type' => 'Button', 'caption' => WPBSBL_Text::t('Understood – do not show again'), 'onClick' => 'WPBSBL_AckPurposeIntro($id);'],
             ],
         ];
     }
@@ -272,7 +290,8 @@ class WPBsbLan extends IPSModule
         $this->UpdateFormField('PurposeIntroPanel', 'visible', false);
     }
 
-    private const LICENSE_URL = 'https://github.com/DG65/NRGWPBsbLan/blob/beta/LICENSE';
+    // Seit 27.10.2026 ist main der Release-Branch (beta ist identisch, ems-integration abgeschafft).
+    private const LICENSE_URL = 'https://github.com/DG65/NRGWPBsbLan/blob/main/LICENSE';
     private const PAYPAL_URL = 'https://paypal.me/DietmarGureth';
 
     private function LicenseHint(): array
@@ -280,14 +299,14 @@ class WPBsbLan extends IPSModule
         return [
             'type'     => 'ExpansionPanel',
             'expanded' => false,
-            'caption'  => '🧡  Über dieses Modul',
+            'caption'  => WPBSBL_Text::t('🧡  About this module'),
             'items'    => [
-                ['type' => 'Label', 'caption' => 'Entstanden aus echter Begeisterung für die eigene Anlage — und ein paar durchgetippten Abenden. Trotzdem: Software-Hobby hin oder her, das hier ist geistiges Eigentum und echte Arbeit steckt drin.'],
-                ['type' => 'Label', 'caption' => 'Lizenz: PolyForm Noncommercial 1.0.0 — privat und nicht-kommerziell frei nutzbar, für den gewerblichen Einsatz braucht es eine gesonderte Lizenz vom Rechteinhaber.'],
-                ['type' => 'Button', 'caption' => 'Lizenztext ansehen', 'onClick' => "echo '" . self::LICENSE_URL . "';", 'link' => true],
-                ['type' => 'Label', 'caption' => 'Gewerbliche Nutzung oder Fragen zur Lizenz? Einfach melden: dietmar@gureth.eu'],
-                ['type' => 'Label', 'caption' => 'Gefällt dir das Modul und du möchtest trotzdem etwas dalassen? Über eine kleine Spende freue ich mich — völlig freiwillig, keine Gegenleistung nötig.'],
-                ['type' => 'Button', 'caption' => '☕  Spenden via PayPal', 'onClick' => "echo '" . self::PAYPAL_URL . "';", 'link' => true],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('Born out of genuine enthusiasm for my own installation — and a few evenings of typing. Still: hobby software or not, this is intellectual property and real work went into it.')],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('License: PolyForm Noncommercial 1.0.0 — free for private and non-commercial use; commercial use needs a separate license from the rights holder.')],
+                ['type' => 'Button', 'caption' => WPBSBL_Text::t('View license text'), 'onClick' => "echo '" . self::LICENSE_URL . "';", 'link' => true],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('Commercial use or questions about the license? Just get in touch: dietmar@gureth.eu')],
+                ['type' => 'Label', 'caption' => WPBSBL_Text::t('Do you like the module and still want to leave something? I would be happy about a small donation — completely voluntary, nothing owed in return.')],
+                ['type' => 'Button', 'caption' => WPBSBL_Text::t('☕  Donate via PayPal'), 'onClick' => "echo '" . self::PAYPAL_URL . "';", 'link' => true],
             ],
         ];
     }
@@ -381,7 +400,7 @@ class WPBsbLan extends IPSModule
 
         $this->SetStatus($reachable ? 102 : 201);
         if (!$reachable) {
-            $this->LogMessage('BSB-LAN-Adapter nicht erreichbar (' . $host . ':' . $this->ReadPropertyInteger('Port') . '): ' . $client->lastError, KL_WARNING);
+            $this->LogMessage(WPBSBL_Text::t('BSB-LAN adapter not reachable (%s:%d): %s', $host, $this->ReadPropertyInteger('Port'), $client->lastError), KL_WARNING);
         }
     }
 
@@ -409,14 +428,14 @@ class WPBsbLan extends IPSModule
     private function maintainDeviceVariables(array $values, array $modeValues, bool $reachable): void
     {
         $pos = 0;
-        $this->MaintainVariable('Erreichbar', 'Erreichbar', VARIABLETYPE_BOOLEAN, '~Alert.Reversed', $pos++, true);
+        $this->MaintainVariable('Erreichbar', WPBSBL_Text::t('Reachable'), VARIABLETYPE_BOOLEAN, '~Alert.Reversed', $pos++, true);
         $this->SetValue('Erreichbar', $reachable);
 
         foreach (self::FIELD_CAPTIONS as $ident => $caption) {
             if (!isset(self::FIELD_PROPERTIES[$ident]) || $this->ReadPropertyInteger(self::FIELD_PROPERTIES[$ident]) <= 0) {
                 continue;
             }
-            $this->MaintainVariable($ident, $caption, VARIABLETYPE_FLOAT, 'NRG.Celsius', $pos++, true);
+            $this->MaintainVariable($ident, WPBSBL_Text::t($caption), VARIABLETYPE_FLOAT, 'NRG.Celsius', $pos++, true);
             if (array_key_exists($ident, $values)) {
                 $this->SetValue($ident, (float)$values[$ident]);
             }
@@ -427,8 +446,8 @@ class WPBsbLan extends IPSModule
                 continue;
             }
             $ident = $def['ident'];
-            $this->MaintainVariable($ident, $def['caption'] . ' (Code)', VARIABLETYPE_INTEGER, '', $pos++, true);
-            $this->MaintainVariable($ident . 'Text', $def['caption'], VARIABLETYPE_STRING, '', $pos++, true);
+            $this->MaintainVariable($ident, WPBSBL_Text::t($def['codeCaption']), VARIABLETYPE_INTEGER, '', $pos++, true);
+            $this->MaintainVariable($ident . 'Text', WPBSBL_Text::t($def['caption']), VARIABLETYPE_STRING, '', $pos++, true);
             if (isset($modeValues[$ident])) {
                 $mode = $modeValues[$ident];
                 $this->SetValue($ident, (int)$mode['value']);
@@ -452,7 +471,7 @@ class WPBsbLan extends IPSModule
         try {
             $archiveIDs = @IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
             if (!is_array($archiveIDs) || count($archiveIDs) === 0) {
-                return '❌ Keine Archiv-Instanz gefunden -- das Logging kann nicht eingeschaltet werden.';
+                return WPBSBL_Text::t('❌ No archive instance found -- logging cannot be enabled.');
             }
             $archiveID = (int)$archiveIDs[0];
             $new = 0;
@@ -472,11 +491,13 @@ class WPBsbLan extends IPSModule
                 IPS_ApplyChanges($archiveID);
             }
             if ($new === 0 && $already === 0) {
-                return 'ℹ️ Noch keine Messwerte vorhanden -- erst einen Abruf abwarten und dann erneut klicken.';
+                return WPBSBL_Text::t('ℹ️ No measured values yet -- wait for a poll first, then click again.');
             }
-            return '✅ Logging eingeschaltet für ' . $new . ' Messwert(e)' . ($already > 0 ? ' (' . $already . ' waren schon eingeschaltet)' : '') . '.';
+            return $already > 0
+                ? WPBSBL_Text::t('✅ Logging enabled for %d measured value(s) (%d were already enabled).', $new, $already)
+                : WPBSBL_Text::t('✅ Logging enabled for %d measured value(s).', $new);
         } catch (\Throwable $e) {
-            return '❌ Logging konnte nicht eingeschaltet werden: ' . $e->getMessage();
+            return WPBSBL_Text::t('❌ Logging could not be enabled: %s', $e->getMessage());
         }
     }
 
@@ -500,26 +521,26 @@ class WPBsbLan extends IPSModule
     {
         $sec = max(0, time() - $timestamp);
         if ($sec < 120) {
-            return 'vor ' . $sec . ' s';
+            return WPBSBL_Text::t('%d s ago', $sec);
         }
         if ($sec < 7200) {
-            return 'vor ' . intdiv($sec, 60) . ' min';
+            return WPBSBL_Text::t('%d min ago', intdiv($sec, 60));
         }
         if ($sec < 172800) {
-            return 'vor ' . intdiv($sec, 3600) . ' h';
+            return WPBSBL_Text::t('%d h ago', intdiv($sec, 3600));
         }
-        return 'vor ' . intdiv($sec, 86400) . ' Tagen';
+        return WPBSBL_Text::t('%d days ago', intdiv($sec, 86400));
     }
 
     /** Anzeigename zu einem Ident -- Temperaturfeld oder Betriebsart-Feld. */
     private function captionOf(string $ident): string
     {
         if (isset(self::FIELD_CAPTIONS[$ident])) {
-            return self::FIELD_CAPTIONS[$ident];
+            return WPBSBL_Text::t(self::FIELD_CAPTIONS[$ident]);
         }
         foreach (self::MODE_FIELDS as $def) {
             if ($def['ident'] === $ident) {
-                return $def['caption'];
+                return WPBSBL_Text::t($def['caption']);
             }
         }
         return $ident;
@@ -537,7 +558,7 @@ class WPBsbLan extends IPSModule
             if ($id === 0) {
                 continue;
             }
-            $parts[] = $caption . ' ' . number_format((float)GetValue($id), 1, ',', '') . ' °C';
+            $parts[] = WPBSBL_Text::t($caption) . ' ' . WPBSBL_Text::zahl((float)GetValue($id)) . ' °C';
         }
         foreach (self::MODE_FIELDS as $property => $def) {
             if ($this->ReadPropertyInteger($property) <= 0) {
@@ -549,7 +570,7 @@ class WPBsbLan extends IPSModule
             }
             $text = (string)GetValue($id);
             if ($text !== '') {
-                $parts[] = $def['caption'] . ' ' . $text;
+                $parts[] = WPBSBL_Text::t($def['caption']) . ' ' . $text;
             }
         }
         return implode(', ', $parts);
@@ -568,23 +589,23 @@ class WPBsbLan extends IPSModule
 
         if (!$active) {
             if (!$hasHost) {
-                return ['ℹ️ Noch nicht eingerichtet: keine IP-Adresse des BSB-LAN-Adapters eingetragen. Danach „WPBsbLan aktiv“ einschalten und übernehmen.', -1];
+                return [WPBSBL_Text::t('ℹ️ Not set up yet: no IP address of the BSB-LAN adapter entered. Then switch on "WPBsbLan active" and apply.'), -1];
             }
-            return ['ℹ️ Ausgeschaltet -- „WPBsbLan aktiv“ einschalten und übernehmen, dann wird der BSB-LAN-Adapter gelesen.', -1];
+            return [WPBSBL_Text::t('ℹ️ Switched off -- switch on "WPBsbLan active" and apply, then the BSB-LAN adapter is read.'), -1];
         }
         if (!$hasHost) {
-            return ['⛔ Pflichtangabe fehlt: die IP-Adresse des BSB-LAN-Adapters.', 0xFF0000];
+            return [WPBSBL_Text::t('⛔ Required entry missing: the IP address of the BSB-LAN adapter.'), 0xFF0000];
         }
 
         $fields = $this->configuredFields();
         $modes = $this->configuredModes();
         if (count($fields) === 0 && count($modes) === 0) {
-            return ['⛔ Kein Feld konfiguriert: mindestens eine Parameternummer eintragen, sonst gibt es nichts zu lesen.', 0xFF0000];
+            return [WPBSBL_Text::t('⛔ No field configured: enter at least one parameter number, otherwise there is nothing to read.'), 0xFF0000];
         }
 
         $lastCycle = $this->ReadAttributeInteger('LastCycleAt');
         if ($lastCycle === 0) {
-            return ['ℹ️ Noch kein Lesezyklus gelaufen -- der erste folgt innerhalb von ' . $interval . ' s nach dem Übernehmen.', -1];
+            return [WPBSBL_Text::t('ℹ️ No read cycle has run yet -- the first follows within %d s after applying.', $interval), -1];
         }
 
         $reachableID = $this->contractFieldID('Erreichbar');
@@ -593,14 +614,14 @@ class WPBsbLan extends IPSModule
         $values = $this->lastValuesText();
 
         if (!$reachable) {
-            $text = '⚠️ BSB-LAN-Adapter antwortet nicht (letzte Antwort: ' . ($lastSeen > 0 ? $this->ageText($lastSeen) : 'noch nie') . '). IP-Adresse, Port und ggf. Passwort prüfen.';
+            $text = WPBSBL_Text::t('⚠️ BSB-LAN adapter does not answer (last answer: %s). Check IP address, port and, if set, the password.', $lastSeen > 0 ? $this->ageText($lastSeen) : WPBSBL_Text::t('never'));
             if ($values !== '') {
-                $text .= ' Letzte bekannte Werte: ' . $values . '.';
+                $text .= ' ' . WPBSBL_Text::t('Last known values: %s.', $values);
             }
             return [$text, -1];
         }
         if (time() - $lastCycle > 3 * $interval + 10) {
-            return ['⚠️ Die letzte Aktualisierung liegt ' . str_replace('vor ', '', $this->ageText($lastCycle)) . ' zurück, erwartet wären ' . $interval . ' s -- Timer und Instanzstatus prüfen. Letzte Werte: ' . $values . '.', -1];
+            return [WPBSBL_Text::t('⚠️ The last update was %s, one is expected every %d s -- check the timer and the instance status. Last values: %s.', $this->ageText($lastCycle), $interval, $values), -1];
         }
         $missingIdents = array_filter(explode(',', $this->ReadAttributeString('LastMissing')));
         if (count($missingIdents) > 0) {
@@ -609,9 +630,9 @@ class WPBsbLan extends IPSModule
                 $names[] = $this->captionOf($ident);
             }
             $count = count($fields) + count($modes);
-            return ['⚠️ Adapter antwortet, aber ' . count($names) . ' von ' . $count . ' Feldern wurden nicht gelesen (' . implode(', ', $names) . ') -- Parameternummer(n) prüfen. Gelesen ' . $this->ageText($lastCycle) . ': ' . $values . '.', -1];
+            return [WPBSBL_Text::t('⚠️ Adapter answers, but %d of %d fields were not read (%s) -- check the parameter number(s). Read %s: %s.', count($names), $count, implode(', ', $names), $this->ageText($lastCycle), $values), -1];
         }
-        return ['✅ BSB-LAN-Adapter antwortet, gelesen ' . $this->ageText($lastCycle) . ': ' . $values . '.', -1];
+        return [WPBSBL_Text::t('✅ BSB-LAN adapter answers, read %s: %s.', $this->ageText($lastCycle), $values), -1];
     }
 
     /**
@@ -626,7 +647,7 @@ class WPBsbLan extends IPSModule
         return [[
             'contractVersion'      => '1.15',
             'Type'                 => 'heatpump',
-            'Caption'              => 'Wärmepumpe (BSB-LAN)',
+            'Caption'              => WPBSBL_Text::t('Heat pump (BSB-LAN)'),
             'PowerID'              => 0,
             'EnergyID'             => 0,
             'Measured'             => false,

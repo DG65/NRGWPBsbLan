@@ -1,5 +1,10 @@
 # Changelog — NRG-Stack WPBsbLan
 
+
+## 0.3.2 (Build 7) — 06.11.2026
+
+- **Store-Prüfung (Punkt 25): Formulartexte nicht mehr selbst übersetzt.** `WPBSBL_Text::formular()` entfällt; die Konsole übersetzt die statischen Texte der `form.json` aus `locale.json` selbst. Variablennamen, Meldungen, Statuszeilen mit eingesetzten Werten und dynamisch gebaute Abschnitte übersetzt das Modul weiter (mit Merkliste). Der Prüfstand sichert, dass jeder statische Formulartext in `locale.json` steht. Keine Änderung für Anwender.
+
 ## 0.3.1 (Build 6) — 05.11.2026
 
 - **Fix: Statuszeile zeigte erfundene Werte.** Bei einer Instanz, die noch nie eine Antwort vom BSB-LAN-Adapter bekommen hat, stand „Letzte bekannte Werte: Außentemperatur 0,0 °C, Vorlauftemperatur 0,0 °C …“, weil die angelegten Variablen auf 0 stehen. Jetzt nennt die Zeile ohne frühere Antwort keine Werte. Außerdem erscheint ein im letzten Zyklus nicht gelesenes Feld nicht mehr mit seinem alten Wert unter „gelesen vor …“. Gefunden bei der Live-Prüfung auf IPS Privat (05.11.2026). Prüfstand: drei neue Prüfungen, drei Mutationen gefangen.

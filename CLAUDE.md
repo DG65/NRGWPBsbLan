@@ -206,7 +206,7 @@ SamsungEhs). Neue Module: nie `AC_SetLoggingStatus()` ohne Nutzerklick aufrufen.
 
 Dietmar „Ja und ja“ (05.11.2026) nach EMS-Auftrag zur Zweisprachigkeit aller Module (SUITE.md Konvention 9). Gleiches Muster wie WPModbusHub 0.8.0:
 Quelltexte englisch (Code, `form.json`), Deutsch in `libs/locale.json`, `php .tools/locale-bauen.php` kopiert nach `WPBsbLan/locale.json` (nie von Hand ändern).
-`libs/WPBSBL_Text.php` (`::t()`, `::zahl()`, `::formular()`, `mitMerkliste`): Symcon wird je Text höchstens einmal je Prozess gefragt, der
+`libs/WPBSBL_Text.php` (`::t()`, `::zahl()`, `mitMerkliste`): Symcon wird je Text höchstens einmal je Prozess gefragt, der
 Konstruktor des Moduls setzt den Übersetzer. `FIELD_CAPTIONS` und `MODE_FIELDS` (`caption`, `codeCaption`) sind englische Quelltexte, übersetzt wird beim
 Anzeigen; Idents bleiben deutsch (Vertrag). Neue Texte: englisch in den Code/die `form.json`, deutsch in `libs/locale.json`, `locale-bauen.php`, Prüfstand
 Block 10. Vor dem Store-Release live messen (Stolperstein 24) und in beiden Sprachen ansehen: ist an keiner echten Installation geschehen.

@@ -795,8 +795,23 @@ check('Deutsch: Variablennamen "Außentemperatur", "Erreichbar", "Betriebsart He
     && ($GLOBALS['ips']['variables']['Erreichbar']['name'] ?? '') === 'Erreichbar' && ($GLOBALS['ips']['variables']['Betriebsart']['name'] ?? '') === 'Betriebsart Heizkreis 1 (Code)'
     && ($GLOBALS['ips']['variables']['BetriebsartKuehl1Text']['name'] ?? '') === 'Betriebsart Kühlkreis 1');
 $formDe = json_decode($de->GetConfigurationForm(), true);
-check('Deutsch: Formular deutsch (Abschnitt, Parameterfeld, Status)', strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), '"🌡️ Parameter-Zuordnung"') !== false
-    && strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Woher bekomme ich die richtige Parameternummer?') !== false && strpos($formDe['status'][0]['caption'], 'nicht erreichbar') !== false);
+$staticTexts = function ($node) use (&$staticTexts): array {
+    $found = [];
+    if (is_array($node)) {
+        foreach ($node as $key => $value) {
+            if (is_string($key) && in_array($key, ['caption', 'confirm', 'label'], true) && is_string($value) && $value !== '') {
+                $found[] = $value;
+            } elseif (is_array($value)) {
+                $found = array_merge($found, $staticTexts($value));
+            }
+        }
+    }
+    return $found;
+};
+$localeDeStatic = json_decode((string)file_get_contents(__DIR__ . '/../WPBsbLan/locale.json'), true)['translations']['de'];
+$missingStatic = array_values(array_filter(array_unique($staticTexts(json_decode((string)file_get_contents(__DIR__ . '/../WPBsbLan/form.json'), true))), fn ($t) => !isset($localeDeStatic[$t])));
+check('Formular: jeder statische Text der form.json steht in locale.json (Symcon übersetzt ihn selbst, Store-Punkt 25)', $missingStatic === [], json_encode($missingStatic, JSON_UNESCAPED_UNICODE));
+check('Formular: statische Texte bleiben englischer Quelltext (keine eigene Übersetzung)', strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Where do I get the right parameter number?') !== false && strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Woher bekomme ich die richtige Parameternummer?') === false);
 check('Deutsch: Statuszeile mit Dezimalkomma', strpos(statusOf($de)[0], 'Außentemperatur 11,9 °C') !== false, statusOf($de)[0]);
 check('Deutsch: "Neu"-Banner zeigt die deutsche Zeile zur neuesten Version', strpos(json_encode($formDe, JSON_UNESCAPED_UNICODE), 'Das Modul ist jetzt durchgehend zweisprachig') !== false);
 check('Deutsch: GetFunctions-Caption deutsch', $de->GetFunctions()[0]['Caption'] === 'Wärmepumpe (BSB-LAN)');

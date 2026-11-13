@@ -18,6 +18,10 @@ One instance = one heating system/heat pump. A status line in the form shows liv
 
 Unlike WPModbusHub there is **no fixed register map per manufacturer** here — BSB-LAN parameter numbers are generated individually for each installation (for the first confirmed system, a BSB-LAN maintainer generated them from the raw data of that very system). The parameter numbers needed (outdoor temperature, flow, return, hot water actual/target, operating mode) are therefore **freely editable in the form** — pre-filled with the values confirmed on a real Fujitsu Waterstage (Siemens RVS21.831/127) as a starting point, not as a guarantee for every system.
 
+## Requirement
+
+**Symcon 9.0 or newer.** With older versions (e.g. 8.1) the Module Store does not show the module and the search reports “No modules found”. Update to Symcon 9.0 first, then search the store for the exact name “NRG-Stack WPBsbLan”.
+
 ## Status
 
 As of 0.3.0 (5 Nov 2026) — **read-only by design** (no control commands, although BSB-LAN officially also supports writing). All fields are confirmed live on a real Fujitsu Waterstage system (Siemens RVS21.831/127) — other BSB-LAN installations may need different parameter numbers.

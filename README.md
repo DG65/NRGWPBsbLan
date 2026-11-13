@@ -18,6 +18,10 @@ Eine Instanz = eine Heizung/Wärmepumpe. Eine Statuszeile im Formular zeigt live
 
 Anders als bei WPModbusHub gibt es hier **keine feste Registerkarte je Hersteller** — BSB-LAN-Parameternummern werden je Anlage individuell erzeugt (bei der ersten bestätigten Anlage von einem BSB-LAN-Maintainer aus den Rohdaten der konkreten Anlage generiert). Die sechs benötigten Parameternummern (Außentemperatur, Vorlauf, Rücklauf, Warmwasser Ist/Soll, Betriebsart) sind deshalb **frei im Formular editierbar** — vorbelegt mit den an einer echten Fujitsu Waterstage (Siemens RVS21.831/127) bestätigten Werten als Startpunkt, nicht als Garantie für jede Anlage.
 
+## Voraussetzung
+
+**Symcon 9.0 oder neuer.** Mit älteren Versionen (z. B. 8.1) zeigt der Module Store das Modul nicht an, die Suche meldet dann „Keine Module gefunden“. Erst auf Symcon 9.0 aktualisieren, dann im Store nach dem genauen Namen „NRG-Stack WPBsbLan“ suchen.
+
 ## Status
 
 Stand 0.1.0 (23.09.2026) — **bewusst nur lesend** (keine Steuerbefehle, obwohl BSB-LAN offiziell auch Schreiben unterstützt). Alle sechs Felder sind an einer echten Fujitsu-Waterstage-Anlage (Siemens RVS21.831/127) live bestätigt (Forum-Threads WPHub, Beiträge #6/#8, 23.09.2026) — bei anderen BSB-LAN-Anlagen können abweichende Parameternummern nötig sein.

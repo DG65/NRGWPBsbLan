@@ -1,5 +1,9 @@
 # Changelog — NRG-Stack WPBsbLan
 
+## 0.3.2 (Build 8) — 17.11.2026
+
+- Store-Metadaten: `date` in `library.json` auf den Release-Zeitpunkt gesetzt und `build` fortlaufend gezählt (Release-Regel, SUITE.md). Keine Code-Änderung; Beta und Stable liegen jetzt auf demselben Commit.
+
 
 ## 0.3.2 (Build 7) — 06.11.2026
 

@@ -3,9 +3,9 @@
     "author": "DG65",
     "name": "NRG-Stack WPBsbLan",
     "url": "https://github.com/DG65/NRGWPBsbLan",
-    "version": "0.3.2",
-    "build": 8,
-    "date": 1794935470,
+    "version": "0.3.3",
+    "build": 9,
+    "date": 1795170248,
     "compatibility": {
         "version": "9.0"
     }

@@ -654,8 +654,10 @@ class WPBsbLan extends IPSModule
     {
         $reachableID = @$this->GetIDForIdent('Erreichbar');
         return [[
-            'contractVersion'      => '1.15',
+            'contractVersion'      => '1.19',
             'Type'                 => 'heatpump',
+            // 1.19 (Fremdanbindung, SUITE.md 20.11.2026): Selbstbeschreibung des Vertrags, Alias zu Type
+            'contractType'         => 'heatpump',
             'Caption'              => WPBSBL_Text::t('Heat pump (BSB-LAN)'),
             'PowerID'              => 0,
             'EnergyID'             => 0,
